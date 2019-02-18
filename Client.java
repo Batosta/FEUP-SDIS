@@ -3,8 +3,7 @@ import java.net.*;
 
 class Client
 {
-   public static void main(String args[]) throws Exception
-   {
+   public static void main(String args[]) throws Exception {
 
       if(args.length != 5 && args.length != 4){
          System.out.println("Usage: java Client <host_name> <port_number> <oper> <opnd>*");
@@ -30,13 +29,13 @@ class Client
       clientSocket.send(sendPacket);
       
       // //RECEIVE RESPONSE
-      // byte[] receiveData = new byte[sendData.length];
-      // DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-      // clientSocket.receive(receivePacket);
+      byte[] receiveData = new byte[sendData.length];
+      DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+      clientSocket.receive(receivePacket);
       
-      // //DISPLAY RESPONSE
-      // String modifiedSentence = new String(receivePacket.getData());
-      // System.out.println("FROM SERVER:" + modifiedSentence);
-      // clientSocket.close();
+      //DISPLAY RESPONSE
+      String modifiedSentence = new String(receivePacket.getData());
+      System.out.println("FROM SERVER:" + modifiedSentence);
+      clientSocket.close();
    }
 }
