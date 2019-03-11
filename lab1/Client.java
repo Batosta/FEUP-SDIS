@@ -16,13 +16,17 @@ class Client
       
       byte[] sendData = new byte[1024];
 
-      String sentence; 
+      String sentence, message;
+      
+      if(args[2].equals("register") && !(args[2].equals("lookup"))){
+         sentence = args[2] + " " + args[3] + " " + args[4];
+         message = "REGISTER ";
+      }
+      else{
+         sentence = args[2] + " " + args[3];
+         message = "LOOKUP ";
+      }
 
-      sentence = args[2] + " " + args[3];
-      
-      if(args[2] == "register")
-         sentence += " " + args[4];
-      
       //SEND DATA
       sendData = sentence.getBytes();
       DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
@@ -35,7 +39,8 @@ class Client
       
       //DISPLAY RESPONSE
       String modifiedSentence = new String(receivePacket.getData());
-      System.out.println("FROM SERVER:" + modifiedSentence);
+      System.out.println(message + modifiedSentence);
+      sendData = null;
       clientSocket.close();
    }
 }
