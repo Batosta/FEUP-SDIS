@@ -1,7 +1,7 @@
 import java.util.Arrays;
 import java.net.InetAddress;
 
-
+// For backup protocol
 public class MulticastBackup extends Multicast {
 
 
