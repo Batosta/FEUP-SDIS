@@ -13,15 +13,16 @@ public class Peer implements RMISystem{
 
 	private static int MAX_THREADS = 100;	// idk about this one
 
-	private static int serverID;
-	private static double protocolVersion;
+	private static int serverID; 				// Peer identifier
+	private static double protocolVersion;		// Protocol version
+
+	// Client communication's RMI access point 
 	// private static String serviceAccessPoint;
 
-	// Private static threads:
-	private static MulticastControl MC;
-	private static MulticastBackup MDB;
-	private static MulticastRestore MDR;
-
+	private static MulticastControl MC;			// Control Multicast
+	private static MulticastBackup MDB;			// Backup Multicast
+	private static MulticastRestore MDR;		// Restore Multicast
+	
 	private static ScheduledThreadPoolExecutor executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(MAX_THREADS);
 
 
