@@ -39,14 +39,7 @@ JC = javac
 #
 
 CLASSES = \
-        Chunk.java \
-        Multicast.java \
-        MulticastBackup.java \
-        MulticastControl.java \
-        MulticastRestore.java \
-        Peer.java \
-        RMISystem.java \
-        TestApp.java
+        *.java
 
 
 #
