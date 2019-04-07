@@ -62,6 +62,7 @@ public class MessageManager implements Runnable {
 		}
 	}
 
+	// TODO
 	public void manageHeader(){
 
 		String data = new String(datagramPacket.getData());

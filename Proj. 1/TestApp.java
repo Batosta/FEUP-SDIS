@@ -5,7 +5,7 @@ import java.rmi.registry.Registry;
 public class TestApp{
 
 
-	private TestApp(){}
+	public TestApp(){}
 
 	public static void main(String[] args){
 

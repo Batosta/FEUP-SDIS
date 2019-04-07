@@ -41,6 +41,8 @@ public class Peer implements RMISystem{
 
  			System.err.println(exc);
 		}
+
+		FileManager file = new FileManager("1.jpg");
 	}
 
 	// TODO
