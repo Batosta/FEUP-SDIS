@@ -1,15 +1,20 @@
 import java.io.File;
+import java.io.IOException;
+import java.io.FileInputStream;
+import java.io.BufferedInputStream;
 import java.lang.Math;
-import java.nio.file.attribute.FileOwnerAttributeView;
-import java.nio.file.attribute.UserPrincipal;
-import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileOwnerAttributeView;
+import java.nio.file.attribute.UserPrincipal;
+import java.nio.file.attribute.UserPrincipalLookupService;
 import java.io.IOException;
 import java.math.BigInteger; 
 import java.security.MessageDigest; 
-import java.security.NoSuchAlgorithmException; 
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.ArrayList;
 
 public class FileManager{
 
@@ -17,7 +22,7 @@ public class FileManager{
 
 	private File file;
 	private String path;
-	private Chunk[] fileChunks;
+	private ArrayList<Chunk> fileChunks;
 	private String fileID;
 
 	public FileManager(String path) {
@@ -25,7 +30,52 @@ public class FileManager{
 		this.path = path;
 		this.file = new File(path);
 		createFileID();
-		// createFileChunks();
+		createFileChunks();
+	}
+
+	public void createFileChunks(){
+
+		int fileSize = (int) file.length();
+		int necessaryChunks = getNecessaryChunks(fileSize);
+		int createdSize = 0;
+
+		this.fileChunks = new ArrayList<Chunk>();
+
+		try{
+
+			FileInputStream fileInputStream = new FileInputStream(this.file);
+			BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+
+			for(int i = 0; i < necessaryChunks; i++){
+
+				byte[] buf = new byte[CHUNK_MAX_SIZE];
+				bufferedInputStream.read(buf);
+
+				if(i == (necessaryChunks - 1)){
+
+					byte[] content = Arrays.copyOf(buf, fileSize - createdSize);
+					Chunk newChunk = new Chunk(i, content, fileSize - createdSize);
+					this.fileChunks.add(newChunk);
+				} else{
+
+					byte[] content = Arrays.copyOf(buf, CHUNK_MAX_SIZE);
+					Chunk newChunk = new Chunk(i, content, CHUNK_MAX_SIZE);
+					this.fileChunks.add(newChunk);
+					createdSize += CHUNK_MAX_SIZE;
+				}
+			}
+		} catch(IOException exception){
+
+			exception.printStackTrace();
+		}
+	}
+
+	private int getNecessaryChunks(double fileSize){
+		
+		if(fileSize % CHUNK_MAX_SIZE == 0) // If the file size is a multiple of the chunk size
+			return (int) ((fileSize / CHUNK_MAX_SIZE) + 1);
+		else
+			return (int) Math.ceil(fileSize / CHUNK_MAX_SIZE);
 	}
 
 	public void createFileID(){
@@ -50,26 +100,6 @@ public class FileManager{
 		this.fileID = hash256(fileName + "|" + fileModificationDate + "|" + fileOwner);
 	}
 
-	public void createFileChunks(){
-
-		double fileSize = file.length();
-		int necessaryChunks = getNecessaryChunks(fileSize);
-
-		for(int i = 0; i < necessaryChunks; i++){
-
-			byte[] content = new byte[CHUNK_MAX_SIZE];
-			// Chunk chunk = new Chunk(0, content, size);
-		}
-	}
-
-	private int getNecessaryChunks(double fileSize){
-		
-		if(fileSize % CHUNK_MAX_SIZE == 0) // If the file size is a multiple of the chunk size
-			return (int) ((fileSize / CHUNK_MAX_SIZE) + 1);
-		else
-			return (int) Math.ceil(fileSize / CHUNK_MAX_SIZE);
-	}
-
 	/*
 	* Credits: https://www.geeksforgeeks.org/sha-256-hash-in-java/
 	*/
@@ -79,9 +109,7 @@ public class FileManager{
             // Static getInstance method is called with hashing SHA 
             MessageDigest md = MessageDigest.getInstance("SHA-256"); 
   
-            // digest() method called 
-            // to calculate message digest of an input 
-            // and return array of byte 
+            // digest() method called to calculate message digest of an input and return array of byte 
             byte[] messageDigest = md.digest(input.getBytes()); 
   
             // Convert byte array into signum representation 
@@ -100,5 +128,21 @@ public class FileManager{
             System.out.println("Exception thrown" + " for incorrect algorithm: " + e); 
             return null; 
         } 
-    } 
+
+    public File getFile(){
+
+    	return this.file;
+    }
+    public String getPath(){
+    	
+    	return this.path;
+    }
+    public ArrayList<Chunk> getFileChunks(){
+    	
+    	return this.fileChunks;
+    }
+    public String getFileID(){
+    	
+    	return this.fileID;
+    }
 }
