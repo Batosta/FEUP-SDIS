@@ -54,12 +54,12 @@ public class FileManager{
 				if(i == (necessaryChunks - 1)){
 
 					byte[] content = Arrays.copyOf(buf, fileSize - createdSize);
-					Chunk newChunk = new Chunk(i, content, fileSize - createdSize);
+					Chunk newChunk = new Chunk(i, this.fileID, content, fileSize - createdSize);
 					this.fileChunks.add(newChunk);
 				} else{
 
 					byte[] content = Arrays.copyOf(buf, CHUNK_MAX_SIZE);
-					Chunk newChunk = new Chunk(i, content, CHUNK_MAX_SIZE);
+					Chunk newChunk = new Chunk(i, this.fileID, content, CHUNK_MAX_SIZE);
 					this.fileChunks.add(newChunk);
 					createdSize += CHUNK_MAX_SIZE;
 				}
@@ -127,7 +127,9 @@ public class FileManager{
         catch (NoSuchAlgorithmException e) { 
             System.out.println("Exception thrown" + " for incorrect algorithm: " + e); 
             return null; 
-        } 
+        }
+    } 
+
 
     public File getFile(){
 

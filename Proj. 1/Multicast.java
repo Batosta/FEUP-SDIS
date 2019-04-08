@@ -7,7 +7,7 @@ import java.net.InetAddress;
 public abstract class Multicast implements Runnable {
 
 	private int port;
-	public MulticastSocket socket;
+	public MulticastSocket multicastSocket;
 	private InetAddress address;
 
 	public Multicast(InetAddress address, int port){
@@ -16,15 +16,17 @@ public abstract class Multicast implements Runnable {
 		this.port = port;
 	}
 
-	public void run(){		// not finished
+	public void run(){
 
-		socketOpening();
+		multicastSocketOpening();
 		byte[] buffer = new byte[64000];	// The maximum size of each chunks 64KByte (where K stands for 1000)
 
 		while(true){
 			try {
 				DatagramPacket datagramPacket = new DatagramPacket(buffer, buffer.length);
-				socket.receive(datagramPacket);
+				multicastSocket.receive(datagramPacket);
+
+				MessageManager messageManager = new MessageManager(datagramPacket);
 
 				// missing something
 
@@ -33,16 +35,24 @@ public abstract class Multicast implements Runnable {
 			}
 		}
 
+		// multicastSocketClosing();
 	}
 
-	private void socketOpening(){
+	private void multicastSocketOpening(){
 
 		try{
-			socket = new MulticastSocket(port);
-			//socket.setTimeToLive(1);
-			socket.joinGroup(address);
+			multicastSocket = new MulticastSocket(port);
+			multicastSocket.setTimeToLive(1);
+			multicastSocket.joinGroup(address);
 		} catch (IOException exception) {
-			exception.printStackTrace();	// Method on Exception instances that prints the stack trace of the instance to System.err
+			exception.printStackTrace();
 		}
 	}
+
+	// Maybe it is not needed
+	// private void multicastSocketClosing(){
+
+	// 	if (multicastSocket != null)
+	// 		multicastSocket.close();
+	// }
 }

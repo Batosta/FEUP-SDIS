@@ -9,6 +9,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 
+
 public class Peer implements RMISystem{
 
 	private static int MAX_THREADS = 100;	// idk about this one
@@ -42,44 +43,65 @@ public class Peer implements RMISystem{
  			System.err.println(exc);
 		}
 
-		FileManager file = new FileManager("1.jpg");
+		/*
+			byte[] buf = "PUTCHUNK 1.0 32 dsfg654zdasf 3 2 <CRLF><CRLF><Body>".getBytes();
+			InetAddress coisa = null;
+			try{
+				coisa = InetAddress.getByName("localhost");
+			} catch(UnknownHostException exc){
+
+				exc.printStackTrace();
+			}
+			DatagramPacket packet = new DatagramPacket(buf, buf.length, coisa, 1052);
+			MessageManager msgManager = new MessageManager(packet);
+		*/
 	}
 
-	// TODO
 	public static void main(String[] args){
 
-		if(args.length != 9){
-			System.out.println("Usage:\n");
-			System.out.println("Peer <serverID> <protocolVersion> <serviceAccessPoint> <ipAddressMC> <portMC> <ipAddressMDB> <portMDB> <ipAddressMDR> <portMDR>");
-			return;
+		try{
+
+			if(args.length != 9){
+				System.out.println("Usage:\n");
+				System.out.println("Peer <serverID> <protocolVersion> <serviceAccessPoint> <ipAddressMC> <portMC> <ipAddressMDB> <portMDB> <ipAddressMDR> <portMDR>");
+				return;
+			}
+
+			serverID = Integer.parseInt(args[0]);
+			protocolVersion = Double.parseDouble(args[1]);
+			String serviceAccessPoint = args[2];
+			String ipAddressMC = args[3];
+			int portMC = Integer.parseInt(args[4]);
+			String ipAddressMDB = args[5];
+			int portMDB = Integer.parseInt(args[6]);
+			String ipAddressMDR = args[7];
+			int portMDR = Integer.parseInt(args[8]);
+
+			Peer peer = new Peer(ipAddressMC, portMC, ipAddressMDB, portMDB, ipAddressMDR, portMDR);
+			RMISystem rmiSystem = (RMISystem) UnicastRemoteObject.exportObject(peer, 0);
+			Registry registry = LocateRegistry.getRegistry();
+	  		registry.bind(serviceAccessPoint, rmiSystem);
+
+	    } catch (Exception exception) {
+
+ 			exception.printStackTrace();
 		}
 
-		serverID = Integer.parseInt(args[0]);
-		protocolVersion = Double.parseDouble(args[1]);
-		String serviceAccessPoint = args[2];
-		String ipAddressMC = args[3];
-		int portMC = Integer.parseInt(args[4]);
-		String ipAddressMDB = args[5];
-		int portMDB = Integer.parseInt(args[6]);
-		String ipAddressMDR = args[7];
-		int portMDR = Integer.parseInt(args[8]);
+        // deserializeStorage(); //loads storage
 
-		Peer peer = new Peer(ipAddressMC, portMC, ipAddressMDB, portMDB, ipAddressMDR, portMDR);
+        // executor.execute(MC);
+        // executor.execute(MDB);
+        // executor.execute(MDR);
+
+        // Runtime.getRuntime().addShutdownHook(new Thread(Peer::serializeStorage)); //if CTRL-C is pressed when a Peer is running, it saves his storage so it can be loaded next time it runs
 	}
  
 	// TODO
-	public void backupData(String path, int repDeg){
+	public void backupData(String path, int repDeg){}
+	public void deleteData(String path){}
+	public void restoreData(String path){}
+	public void reclaimSpace(int wantedSpace){}
 
-	}
-	public void deleteData(String path){
-
-	}
-	public void restoreData(String path){
-
-	}
-	public void reclaimSpace(int wantedSpace){
-
-	}
 
 	public int getServerID(){
 

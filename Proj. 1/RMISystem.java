@@ -3,8 +3,8 @@ import java.rmi.RemoteException;
 
 public interface RMISystem extends Remote {
 
-	//void chunkBackup(String path, int replicationDeg) throws RemoteException;
-	//void chunkDelete(String path) throws RemoteException;
-	//void chunkRestore(String path) throws RemoteException;
-	//void chunkSpaceReclaim(int spaceReclaimed) throws RemoteException;
+	void backupData(String path, int replicationDeg) throws RemoteException;
+	void deleteData(String path) throws RemoteException;
+	void restoreData(String path) throws RemoteException;
+	void reclaimSpace(int spaceReclaimed) throws RemoteException;
 }

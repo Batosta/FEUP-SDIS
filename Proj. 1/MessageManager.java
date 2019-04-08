@@ -1,5 +1,8 @@
+import java.io.ByteArrayInputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
 import java.net.DatagramPacket;
-
 
 /* -------------------------------- */
 // import java.util.Arrays;
@@ -7,12 +10,8 @@ import java.net.DatagramPacket;
 // import java.net.UnknownHostException;
 // import java.io.File;
 // import java.io.FilenameFilter;
-// import java.io.IOException;
 // import java.util.ArrayList;
 // import java.util.Random;
-// import java.io.ByteArrayInputStream;
-// import java.io.BufferedReader;
-// import java.io.InputStreamReader;
 /* -------------------------------- */
 
 
@@ -25,8 +24,7 @@ public class MessageManager implements Runnable {
 	private String messageType;
 
 
-
-	public void MessageManager(DatagramPacket datagramPacket){
+	public MessageManager(DatagramPacket datagramPacket){
 
 		this.datagramPacket = datagramPacket;
 	}
@@ -62,17 +60,22 @@ public class MessageManager implements Runnable {
 		}
 	}
 
-	// TODO
 	public void manageHeader(){
 
-		String data = new String(datagramPacket.getData());
-		headerData = data.split(" ");
-		// for(int i = 0; i < headerData.length; i++){
+		ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(datagramPacket.getData());
+		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(byteArrayInputStream));
 
-		// 	System.out.println(headerData[i]);
-		// }
+		try{
+			String header = bufferedReader.readLine();
+			headerData = header.split(" ");
+
+		} catch(IOException exception){
+
+			exception.printStackTrace();
+		}
 	}
 
+	// TODO
 	public void managePUTCHUNK(){
 		System.out.println("PUTCHUNK");
 	}
