@@ -1,42 +1,76 @@
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
 
 public class TestApp{
 
+	private static String type;
+	private static RMISystem stub;
 
-	public TestApp(){}
+	public TestApp(String[] args){
+
+		try{
+
+			Registry registry = LocateRegistry.getRegistry(null);
+			String peerID = "P" + args[0];
+			System.out.println(peerID);
+			stub = (RMISystem) registry.lookup(peerID);
+		} catch(Exception exception){
+
+			exception.printStackTrace();
+		}
+
+		switch(type){
+
+			case "BACKUP":
+				try {
+	               stub.backupData(args[2], Integer.parseInt(args[3]));
+	            } catch (RemoteException exception) {
+	            	exception.printStackTrace();
+	            }
+				break;
+			case "RESTORE":
+				try{
+					stub.deleteData(args[2]);
+				} catch (RemoteException exception) {
+	            	exception.printStackTrace();
+	            }
+				break;
+			case "DELETE":
+				try{
+					stub.restoreData(args[2]);
+				} catch (RemoteException exception) {
+	            	exception.printStackTrace();
+	            }
+				break;
+			case "RECLAIM":
+				try{
+					stub.reclaimSpace(Integer.parseInt(args[2]));
+				} catch (RemoteException exception) {
+	            	exception.printStackTrace();
+	            }
+				break;
+			default:
+				break;
+		}
+	}
 
 	public static void main(String[] args){
 
-		// try{
+		if(args.length != 4){
 
-		// 	if(args.length > 4){
+			System.out.println("Usage:\n");
+			System.out.println("java TestApp <peer_ap> <sub_protocol> <opnd_1> <opnd_2>");
+			return;
+		}
+		type = args[1];
+		if(!type.equals("BACKUP") && !type.equals("RESTORE") && !type.equals("DELETE") && !type.equals("RECLAIM")){
 
-		// 		System.out.println("Usage:\n");
-		// 		System.out.println("TestApp <peer_ap> <sub_protocol> <opnd_1> <opnd_2>");
-		// 		return;
-		// 	}
-
-		// 	String peer_ap = args[0];			// Peer's access point
-		// 	String sub_protocol  = args[1];		// BACKUP, RESTORE, DELETE, RECLAIM
-		// 	// String opnd_1 = args[2];			// Path name of the file OR maximum amount of disk space (for RECLAIM case)
-		// 	// int opnd_2 = args[3];				// Desired replication degree
-
-		// 	try {
-
-	 //            Registry reg = LocateRegistry.getRegistry("localhost");
-	 //            stub = (RMISystem) registry.lookup(peer_ap);			// idk de onde veio o lookup
-
-	 //        } catch (Exception exception) {
-
-	 //            exception.printStackTrace();
-	 //        }
-
-		// }
-		// catch(Exception exception){
-
-		// 	e.printStackTrace();
-		// }
+			System.out.println("Possible operations:\n");
+			System.out.println("BACKUP | RESTORE | DELETE | RECLAIM");
+			return;
+		}
+		TestApp testApp = new TestApp(args);
 	}
 }

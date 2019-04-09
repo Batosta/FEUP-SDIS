@@ -12,9 +12,9 @@ import java.util.concurrent.TimeUnit;
 
 public class Peer implements RMISystem{
 
-	private static int MAX_THREADS = 100;	// idk about this one
+	private static int MAX_THREADS = 100;
 
-	private static int serverID; 				// Peer identifier
+	private static String serverID; 			// Peer + identifier
 	private static double protocolVersion;		// Protocol version
 
 	// Client communication's RMI access point 
@@ -42,19 +42,6 @@ public class Peer implements RMISystem{
 
  			System.err.println(exc);
 		}
-
-		/*
-			byte[] buf = "PUTCHUNK 1.0 32 dsfg654zdasf 3 2 <CRLF><CRLF><Body>".getBytes();
-			InetAddress coisa = null;
-			try{
-				coisa = InetAddress.getByName("localhost");
-			} catch(UnknownHostException exc){
-
-				exc.printStackTrace();
-			}
-			DatagramPacket packet = new DatagramPacket(buf, buf.length, coisa, 1052);
-			MessageManager msgManager = new MessageManager(packet);
-		*/
 	}
 
 	public static void main(String[] args){
@@ -63,11 +50,12 @@ public class Peer implements RMISystem{
 
 			if(args.length != 9){
 				System.out.println("Usage:\n");
-				System.out.println("Peer <serverID> <protocolVersion> <serviceAccessPoint> <ipAddressMC> <portMC> <ipAddressMDB> <portMDB> <ipAddressMDR> <portMDR>");
+				System.out.println("java Peer <serverID> <protocolVersion> <serviceAccessPoint> <ipAddressMC> <portMC> <ipAddressMDB> <portMDB> <ipAddressMDR> <portMDR>");
 				return;
 			}
 
-			serverID = Integer.parseInt(args[0]);
+			serverID = "P" + args[0];
+			System.out.println(serverID);
 			protocolVersion = Double.parseDouble(args[1]);
 			String serviceAccessPoint = args[2];
 			String ipAddressMC = args[3];
@@ -80,7 +68,7 @@ public class Peer implements RMISystem{
 			Peer peer = new Peer(ipAddressMC, portMC, ipAddressMDB, portMDB, ipAddressMDR, portMDR);
 			RMISystem rmiSystem = (RMISystem) UnicastRemoteObject.exportObject(peer, 0);
 			Registry registry = LocateRegistry.getRegistry();
-	  		registry.bind(serviceAccessPoint, rmiSystem);
+	  		registry.bind(serverID, rmiSystem);
 
 	    } catch (Exception exception) {
 
@@ -89,9 +77,9 @@ public class Peer implements RMISystem{
 
         // deserializeStorage(); //loads storage
 
-        // executor.execute(MC);
-        // executor.execute(MDB);
-        // executor.execute(MDR);
+        executor.execute(MC);
+        executor.execute(MDB);
+        executor.execute(MDR);
 
         // Runtime.getRuntime().addShutdownHook(new Thread(Peer::serializeStorage)); //if CTRL-C is pressed when a Peer is running, it saves his storage so it can be loaded next time it runs
 	}
@@ -103,7 +91,7 @@ public class Peer implements RMISystem{
 	public void reclaimSpace(int wantedSpace){}
 
 
-	public int getServerID(){
+	public String getServerID(){
 
 		return this.serverID;
 	}
