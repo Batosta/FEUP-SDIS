@@ -142,8 +142,27 @@ public class Peer implements RMISystem{
 
 
 	public void deleteData(String path){
-		System.out.println("Peer DELETE");
+		
+		try {
+
+			FileManager fileManager = new FileManager(path);
+
+			int port = this.MC.getPort();
+			InetAddress address = this.MC.getAddress();
+			DatagramSocket datagramSocket = new DatagramSocket();
+
+			for(int i = 0; i < 5; i++){
+
+				byte[] buf = createDeleteMessage(fileManager.getFileID());
+				DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
+				datagramSocket.send(datagramPacket);
+			}
+		} catch (IOException exception) {
+			exception.printStackTrace();
+		}
 	}
+
+
 	public void restoreData(String path){
 		System.out.println("Peer RESTORE");
 	}
@@ -196,14 +215,14 @@ public class Peer implements RMISystem{
 		return strBytes;
 	}
 
-	private byte[] createDeleteMessage(Chunk chunk){
+	private byte[] createDeleteMessage(String fileID){
 
 		String str = "DELETE ";
 		str += this.protocolVersion;
 		str += " ";
 		str += this.serverID;
 		str += " ";
-		str += chunk.getFileID();
+		str += fileID;
 		str += "\r\n\r\n";
 
 		byte[] strBytes = str.getBytes();

@@ -149,7 +149,15 @@ public class MessageManager{
 
 	// DELETE <Version> <SenderId> <FileId> <CRLF><CRLF>
 	public void manageDELETE(){
-		System.out.println("DELETE");	
+
+		String str = Peer.getInstance().getServerID() + File.separator + "backup" + File.separator + headerData[3];
+		File toBeDeleteDirectory = new File(str);
+
+		String[]entries = toBeDeleteDirectory.list();
+		for(String s: entries){
+		    File currentFile = new File(toBeDeleteDirectory.getPath(),s);
+		    currentFile.delete();
+		}
 	}
 
 	// REMOVED <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>

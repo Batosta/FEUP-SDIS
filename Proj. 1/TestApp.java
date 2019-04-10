@@ -40,8 +40,6 @@ public class TestApp{
 				break;
 			case "DELETE":
 				try{
-					System.out.println("DELETE");
-					System.out.println(args[2]);
 					stub.deleteData(args[2]);
 				} catch (RemoteException exception) {
 	            	exception.printStackTrace();
