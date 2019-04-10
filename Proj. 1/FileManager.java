@@ -23,12 +23,16 @@ public class FileManager{
 	private File file;
 	private String path;
 	private ArrayList<Chunk> fileChunks;
+	private int necessaryChunks;
 	private String fileID;
 
 	public FileManager(String path) {
 
 		this.path = path;
 		this.file = new File(path);
+		this.fileChunks = new ArrayList<Chunk>();
+		this.necessaryChunks = 0;
+		this.fileID = "";
 		createFileID();
 		createFileChunks();
 	}
@@ -36,10 +40,8 @@ public class FileManager{
 	public void createFileChunks(){
 
 		int fileSize = (int) file.length();
-		int necessaryChunks = getNecessaryChunks(fileSize);
+		this.necessaryChunks = calculateNecessaryChunks(fileSize);
 		int createdSize = 0;
-
-		this.fileChunks = new ArrayList<Chunk>();
 
 		try{
 
@@ -70,7 +72,7 @@ public class FileManager{
 		}
 	}
 
-	private int getNecessaryChunks(double fileSize){
+	private int calculateNecessaryChunks(double fileSize){
 		
 		if(fileSize % CHUNK_MAX_SIZE == 0) // If the file size is a multiple of the chunk size
 			return (int) ((fileSize / CHUNK_MAX_SIZE) + 1);
@@ -142,6 +144,10 @@ public class FileManager{
     public ArrayList<Chunk> getFileChunks(){
     	
     	return this.fileChunks;
+    }
+    public int getNecessaryChunks(){
+    	
+    	return this.necessaryChunks;
     }
     public String getFileID(){
     	

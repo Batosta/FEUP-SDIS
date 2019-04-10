@@ -2,17 +2,20 @@ import java.io.*;
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
+import java.net.*;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 
-
 public class Peer implements RMISystem{
 
 	private static int MAX_THREADS = 100;
+
+	private static Peer instance;
 
 	private static String serverID; 			// Peer + identifier
 	private static double protocolVersion;		// Protocol version
@@ -38,6 +41,7 @@ public class Peer implements RMISystem{
 			this.MC = new MulticastControl(mcIpAddress, portMC);
 			this.MDB = new MulticastBackup(mdbIpAddress, portMDB);
 			this.MDR = new MulticastRestore(mdrIpAddress, portMDR);
+			this.instance = this;
 		} catch (Exception exc) {
 
  			System.err.println(exc);
@@ -55,7 +59,6 @@ public class Peer implements RMISystem{
 			}
 
 			serverID = "P" + args[0];
-			System.out.println(serverID);
 			protocolVersion = Double.parseDouble(args[1]);
 			String serviceAccessPoint = args[2];
 			String ipAddressMC = args[3];
@@ -66,6 +69,7 @@ public class Peer implements RMISystem{
 			int portMDR = Integer.parseInt(args[8]);
 
 			Peer peer = new Peer(ipAddressMC, portMC, ipAddressMDB, portMDB, ipAddressMDR, portMDR);
+
 			RMISystem rmiSystem = (RMISystem) UnicastRemoteObject.exportObject(peer, 0);
 			Registry registry = LocateRegistry.getRegistry();
 	  		registry.bind(serverID, rmiSystem);
@@ -84,11 +88,73 @@ public class Peer implements RMISystem{
         // Runtime.getRuntime().addShutdownHook(new Thread(Peer::serializeStorage)); //if CTRL-C is pressed when a Peer is running, it saves his storage so it can be loaded next time it runs
 	}
  
-	// TODO
-	public void backupData(String path, int repDeg){}
-	public void deleteData(String path){}
-	public void restoreData(String path){}
-	public void reclaimSpace(int wantedSpace){}
+
+ 	// TODO NOW
+	public void backupData(String path, int repDeg){
+
+		try {
+
+			FileManager fileManager = new FileManager(path);
+
+			int port = this.MDB.getPort();
+			InetAddress address = this.MDB.getAddress();
+			DatagramSocket datagramSocket = new DatagramSocket();
+
+			int chunksNumber = fileManager.getNecessaryChunks();
+			ArrayList<Chunk> chunks = fileManager.getFileChunks();
+
+			for(int i = 0; i < chunksNumber; i++){
+
+				byte[] buf = createPutchunkMessage(chunks.get(i), repDeg);
+
+				DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
+
+				datagramSocket.send(datagramPacket);
+			}
+
+		} catch (IOException exception) {
+			exception.printStackTrace();	// Method on Exception instances that prints the stack trace of the instance to System.err
+		}
+	}
+
+
+
+
+	public void deleteData(String path){
+		System.out.println("Peer DELETE");
+	}
+	public void restoreData(String path){
+		System.out.println("Peer RESTORE");
+	}
+	public void reclaimSpace(int wantedSpace){
+		System.out.println("Peer RECLAIMS");
+	}
+
+
+	// PUTCHUNK <Version> <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
+	private byte[] createPutchunkMessage(Chunk chunk, int repDeg){
+
+		String str = "PUTCHUNK ";
+		str += this.protocolVersion;
+		str += " ";
+		str += this.serverID;
+		str += " ";
+		str += chunk.getFileID();
+		str += " ";
+		str += chunk.getOrder();
+		str += " ";
+		str += Integer.toString(repDeg);
+		str += " ";
+		str += "\r\n\r\n";
+
+		byte[] strBytes = str.getBytes();
+		byte[] chunkContent = chunk.getContent();
+		byte[] combined = new byte[strBytes.length + chunkContent.length];
+
+		System.arraycopy(strBytes, 0, combined, 0, strBytes.length);
+		System.arraycopy(chunkContent, 0, combined, strBytes.length, chunkContent.length);
+		return combined;
+	}
 
 
 	public String getServerID(){
@@ -110,5 +176,9 @@ public class Peer implements RMISystem{
 	public MulticastRestore getMulticastRestore(){
 
 		return this.MDR;
+	}
+	public static Peer getInstance(){
+
+		return instance;
 	}
 }

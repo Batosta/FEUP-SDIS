@@ -16,13 +16,15 @@ public abstract class Multicast implements Runnable {
 		this.port = port;
 	}
 
+	@Override
 	public void run(){
 
 		multicastSocketOpening();
 		byte[] buffer = new byte[64000];	// The maximum size of each chunks 64KByte (where K stands for 1000)
-
 		while(true){
+
 			try {
+
 				DatagramPacket datagramPacket = new DatagramPacket(buffer, buffer.length);
 				multicastSocket.receive(datagramPacket);
 
@@ -34,8 +36,6 @@ public abstract class Multicast implements Runnable {
 				exception.printStackTrace();	// Method on Exception instances that prints the stack trace of the instance to System.err
 			}
 		}
-
-		// multicastSocketClosing();
 	}
 
 	private void multicastSocketOpening(){
@@ -49,10 +49,26 @@ public abstract class Multicast implements Runnable {
 		}
 	}
 
-	// Maybe it is not needed
-	// private void multicastSocketClosing(){
+	public void sendDatagramPacket(byte[] buf){
 
-	// 	if (multicastSocket != null)
-	// 		multicastSocket.close();
-	// }
+		try {
+
+			DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
+			System.out.println("SGFDGFSFGDSDF");
+			multicastSocket.send(datagramPacket);
+			System.out.println("WEWEWEWEEWEWEW");
+
+		} catch (IOException exception) {
+			exception.printStackTrace();	// Method on Exception instances that prints the stack trace of the instance to System.err
+		}
+	}
+
+	public int getPort(){
+		
+		return this.port;
+	}
+	public InetAddress getAddress(){
+
+		return this.address;
+	}
 }

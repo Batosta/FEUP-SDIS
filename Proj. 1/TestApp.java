@@ -14,7 +14,6 @@ public class TestApp{
 
 			Registry registry = LocateRegistry.getRegistry(null);
 			String peerID = "P" + args[0];
-			System.out.println(peerID);
 			stub = (RMISystem) registry.lookup(peerID);
 		} catch(Exception exception){
 
@@ -25,27 +24,33 @@ public class TestApp{
 
 			case "BACKUP":
 				try {
-	               stub.backupData(args[2], Integer.parseInt(args[3]));
+	               	stub.backupData(args[2], Integer.parseInt(args[3]));
 	            } catch (RemoteException exception) {
 	            	exception.printStackTrace();
 	            }
 				break;
 			case "RESTORE":
 				try{
-					stub.deleteData(args[2]);
+					System.out.println("RESTORE");
+					System.out.println(args[2]);
+					stub.restoreData(args[2]);
 				} catch (RemoteException exception) {
 	            	exception.printStackTrace();
 	            }
 				break;
 			case "DELETE":
 				try{
-					stub.restoreData(args[2]);
+					System.out.println("DELETE");
+					System.out.println(args[2]);
+					stub.deleteData(args[2]);
 				} catch (RemoteException exception) {
 	            	exception.printStackTrace();
 	            }
 				break;
 			case "RECLAIM":
 				try{
+					System.out.println("RESTORE");
+					System.out.println(Integer.parseInt(args[2]));
 					stub.reclaimSpace(Integer.parseInt(args[2]));
 				} catch (RemoteException exception) {
 	            	exception.printStackTrace();
@@ -58,7 +63,7 @@ public class TestApp{
 
 	public static void main(String[] args){
 
-		if(args.length != 4){
+		if(args.length != 3 && args.length != 4){
 
 			System.out.println("Usage:\n");
 			System.out.println("java TestApp <peer_ap> <sub_protocol> <opnd_1> <opnd_2>");
