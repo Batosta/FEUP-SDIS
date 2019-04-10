@@ -178,6 +178,53 @@ public class Peer implements RMISystem{
 		return combined;
 	}
 
+	private byte[] createGetChunkMessage(Chunk chunk){
+
+		String str = "GETCHUNK ";
+		str += this.protocolVersion;
+		str += " ";
+		str += this.serverID;
+		str += " ";
+		str += chunk.getFileID();
+		str += " ";
+		str += chunk.getOrder();
+		str += " ";
+		str += "\r\n\r\n";
+
+		byte[] strBytes = str.getBytes();
+		return strBytes;
+	}
+
+	private byte[] createDeleteMessage(Chunk chunk){
+
+		String str = "DELETE ";
+		str += this.protocolVersion;
+		str += " ";
+		str += this.serverID;
+		str += " ";
+		str += chunk.getFileID();
+		str += "\r\n\r\n";
+
+		byte[] strBytes = str.getBytes();
+		return strBytes;
+	}
+
+	private byte[] createRemovedMessage(Chunk chunk){
+
+		String str = "REMOVED ";
+		str += this.protocolVersion;
+		str += " ";
+		str += this.serverID;
+		str += " ";
+		str += chunk.getFileID();
+		str += " ";
+		str += chunk.getOrder();
+		str += "\r\n\r\n";
+
+		byte[] strBytes = str.getBytes();
+		return strBytes;
+	}
+
 
 	public String getServerID(){
 

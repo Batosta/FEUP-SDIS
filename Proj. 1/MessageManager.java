@@ -114,6 +114,29 @@ public class MessageManager{
 		System.out.println("GETCHUNK");
 	}
 
+	//Não temos a certeza se é assim
+	private static void sendCHUNK(Chunk chunk){
+
+		String chk = "CHUNK ";
+		chk += headerData[1];
+		chk += " ";
+		chk += headerData[2];
+		chk += " ";
+		chk += headerData[3];
+		chk += " ";
+		chk += headerData[4];
+		chk += " ";
+		chk += "\r\n\r\n";
+
+		byte[] chkBytes = chk.getBytes();
+		byte[] chunkContent = chunk.getContent();
+		byte[] combined = new byte[strBytes.length + chunkContent.length];
+
+		System.arraycopy(chkBytes, 0, combined, 0, chkBytes.length);
+		System.arraycopy(chunkContent, 0, combined, chkBytes.length, chunkContent.length);
+		return combined;
+	}
+
 	// CHUNK <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF><Body>
 	public void manageCHUNK(){
 		System.out.println("CHUNK");
@@ -121,7 +144,7 @@ public class MessageManager{
 
 	// DELETE <Version> <SenderId> <FileId> <CRLF><CRLF>
 	public void manageDELETE(){
-		System.out.println("DELETE");
+		System.out.println("DELETE");	
 	}
 
 	// REMOVED <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
