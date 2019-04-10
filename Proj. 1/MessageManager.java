@@ -133,11 +133,13 @@ public class MessageManager{
 
 		byte[] chkBytes = chk.getBytes();
 		byte[] chunkContent = chunk.getContent();
-		byte[] combined = new byte[strBytes.length + chunkContent.length];
+		byte[] combined = new byte[chkBytes.length + chunkContent.length];
 
 		System.arraycopy(chkBytes, 0, combined, 0, chkBytes.length);
 		System.arraycopy(chunkContent, 0, combined, chkBytes.length, chunkContent.length);
-		return combined;
+		
+		MulticastRestore mdr = Peer.getInstance().getMulticastRestore();
+		mdr.sendDatagramPacket(combined);
 	}
 
 	// CHUNK <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF><Body>
