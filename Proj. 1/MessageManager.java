@@ -102,7 +102,11 @@ public class MessageManager{
 	}
 
 	public void manageSTORED(){
-		System.out.println("STORED");
+		
+		if(headerData[2].equals(Peer.getInstance().getServerID())){
+			System.out.println("Increase: " + headerData[4]);
+			Peer.getInstance().incrementCurrentReplicationDegree();
+		}
 	}
 
 	// GETCHUNK <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>

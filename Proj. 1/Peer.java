@@ -20,8 +20,8 @@ public class Peer implements RMISystem{
 	private static String serverID; 			// Peer + identifier
 	private static double protocolVersion;		// Protocol version
 
-	// Client communication's RMI access point 
-	// private static String serviceAccessPoint;
+	private static int currentReplicationDegree;
+	private static int desiredReplicationDegree;
 
 	private static MulticastControl MC;			// Control Multicast
 	private static MulticastBackup MDB;			// Backup Multicast
@@ -42,6 +42,9 @@ public class Peer implements RMISystem{
 			this.MDB = new MulticastBackup(mdbIpAddress, portMDB);
 			this.MDR = new MulticastRestore(mdrIpAddress, portMDR);
 			this.instance = this;
+			this.currentReplicationDegree = 0;
+			this.desiredReplicationDegree = 0;
+
 		} catch (Exception exc) {
 
  			System.err.println(exc);
@@ -89,7 +92,6 @@ public class Peer implements RMISystem{
 	}
  
 
- 	// TODO NOW
 	public void backupData(String path, int repDeg){
 
 		try {
@@ -121,16 +123,21 @@ public class Peer implements RMISystem{
 						exception.printStackTrace();
 					}
 
-					// se stored >= redegree break
+					if(currentReplicationDegree >= desiredReplicationDegree){
+
+						System.out.println("enough: " + 1);
+						currentReplicationDegree = 0;
+						break;
+					}
 				}
+				currentReplicationDegree = 0;
 			}
+			desiredReplicationDegree = 0;
 
 		} catch (IOException exception) {
-			exception.printStackTrace();	// Method on Exception instances that prints the stack trace of the instance to System.err
+			exception.printStackTrace();
 		}
 	}
-
-
 
 
 	public void deleteData(String path){
@@ -146,6 +153,8 @@ public class Peer implements RMISystem{
 
 	// PUTCHUNK <Version> <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
 	private byte[] createPutchunkMessage(Chunk chunk, int repDeg){
+
+		setDesiredReplicationDegree(repDeg);
 
 		String str = "PUTCHUNK ";
 		str += this.protocolVersion;
@@ -193,5 +202,21 @@ public class Peer implements RMISystem{
 	public static Peer getInstance(){
 
 		return instance;
+	}
+	public static int getCurrentReplicationDegree(){
+
+		return currentReplicationDegree;
+	}
+	public static int getDesiredReplicationDegree(){
+
+		return desiredReplicationDegree;
+	}
+	public static void incrementCurrentReplicationDegree(){
+
+		currentReplicationDegree++;
+	}
+	public static void setDesiredReplicationDegree(int desired){
+
+		desiredReplicationDegree = desired;
 	}
 }
