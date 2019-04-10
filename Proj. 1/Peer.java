@@ -107,6 +107,8 @@ public class Peer implements RMISystem{
 
 			for(int i = 0; i < chunksNumber; i++){
 
+				currentReplicationDegree = 0;
+				desiredReplicationDegree = 0;
 				int waitingTime = 1000;
 				for (int j = 0; j < 5; j++) {
 					
@@ -117,22 +119,21 @@ public class Peer implements RMISystem{
 					datagramSocket.send(datagramPacket);
 
 					try{
+
 						Thread.sleep(waitingTime);
 						waitingTime *= 2;
 					} catch(InterruptedException exception){
+						
 						exception.printStackTrace();
 					}
 
 					if(currentReplicationDegree >= desiredReplicationDegree){
 
-						System.out.println("enough: " + 1);
-						currentReplicationDegree = 0;
 						break;
 					}
+					currentReplicationDegree = 0;
 				}
-				currentReplicationDegree = 0;
 			}
-			desiredReplicationDegree = 0;
 
 		} catch (IOException exception) {
 			exception.printStackTrace();

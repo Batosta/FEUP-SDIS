@@ -68,9 +68,12 @@ public class MessageManager{
 			try{
 
 				File newFile = new File(str + File.separator + "chk" + headerData[4]);
-				FileOutputStream fop = new FileOutputStream(newFile);
-				fop.write(bodyData);
-				fop.close();
+				if(!newFile.exists()){
+					
+					FileOutputStream fop = new FileOutputStream(newFile);
+					fop.write(bodyData);
+					fop.close();
+				}
 
 			} catch (Exception exception) {
 				exception.printStackTrace();
@@ -101,10 +104,10 @@ public class MessageManager{
 		mc.sendDatagramPacket(storedBytes);
 	}
 
+	// STORED <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
 	public void manageSTORED(){
 		
 		if(headerData[2].equals(Peer.getInstance().getServerID())){
-			System.out.println("Increase: " + headerData[4]);
 			Peer.getInstance().incrementCurrentReplicationDegree();
 		}
 	}
