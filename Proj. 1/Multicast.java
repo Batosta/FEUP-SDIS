@@ -38,6 +38,18 @@ public abstract class Multicast implements Runnable {
 		}
 	}
 
+	public void sendDatagramPacket(byte[] buf){
+
+		try {
+
+			DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
+			multicastSocket.send(datagramPacket);
+
+		} catch (IOException exception) {
+			exception.printStackTrace();	// Method on Exception instances that prints the stack trace of the instance to System.err
+		}
+	}
+
 	private void multicastSocketOpening(){
 
 		try{
@@ -46,20 +58,6 @@ public abstract class Multicast implements Runnable {
 			multicastSocket.joinGroup(address);
 		} catch (IOException exception) {
 			exception.printStackTrace();
-		}
-	}
-
-	public void sendDatagramPacket(byte[] buf){
-
-		try {
-
-			DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
-			System.out.println("SGFDGFSFGDSDF");
-			multicastSocket.send(datagramPacket);
-			System.out.println("WEWEWEWEEWEWEW");
-
-		} catch (IOException exception) {
-			exception.printStackTrace();	// Method on Exception instances that prints the stack trace of the instance to System.err
 		}
 	}
 

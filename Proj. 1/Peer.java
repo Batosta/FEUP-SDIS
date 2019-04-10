@@ -105,11 +105,24 @@ public class Peer implements RMISystem{
 
 			for(int i = 0; i < chunksNumber; i++){
 
-				byte[] buf = createPutchunkMessage(chunks.get(i), repDeg);
+				int waitingTime = 1000;
+				for (int j = 0; j < 5; j++) {
+					
+					byte[] buf = createPutchunkMessage(chunks.get(i), repDeg);
 
-				DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
+					DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
 
-				datagramSocket.send(datagramPacket);
+					datagramSocket.send(datagramPacket);
+
+					try{
+						Thread.sleep(waitingTime);
+						waitingTime *= 2;
+					} catch(InterruptedException exception){
+						exception.printStackTrace();
+					}
+
+					// se stored >= redegree break
+				}
 			}
 
 		} catch (IOException exception) {

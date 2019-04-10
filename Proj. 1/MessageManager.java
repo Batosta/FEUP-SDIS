@@ -57,7 +57,6 @@ public class MessageManager{
 		}
 	}
 
-	// PUTCHUNK <Version> <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
 	private static void managePUTCHUNK(){
 		
 		if(!headerData[2].equals(Peer.getInstance().getServerID())){
@@ -81,7 +80,6 @@ public class MessageManager{
 		}
 	}
 
-	// STORED <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
 	private static void sendSTORED(){
 		
 		String stored = "STORED ";
@@ -103,18 +101,6 @@ public class MessageManager{
 		mc.sendDatagramPacket(storedBytes);
 	}
 
-	private static void waitRandomTime(){
-
-		Random r = new Random();
-		int result = r.nextInt(401);
-		try{
-			Thread.sleep(result);
-		} catch(InterruptedException exception){
-			exception.printStackTrace();
-		}
-	}
-
-	// STORED <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
 	public void manageSTORED(){
 		System.out.println("STORED");
 	}
@@ -138,7 +124,6 @@ public class MessageManager{
 	public void manageREMOVED(){
 		System.out.println("REMOVED");
 	}
-
 
 
 	// Function to parse the header of the messages received
@@ -182,5 +167,17 @@ public class MessageManager{
 
 		start = sum + linesSum * "\r\n".getBytes().length;
 		this.bodyData = Arrays.copyOfRange(datagramPacket.getData(), start, datagramPacket.getLength());
+	}
+
+	// Function that waits a random delay uniformly distributed between 0 and 400 ms
+	private static void waitRandomTime(){
+
+		Random r = new Random();
+		int result = r.nextInt(401);
+		try{
+			Thread.sleep(result);
+		} catch(InterruptedException exception){
+			exception.printStackTrace();
+		}
 	}
 }
