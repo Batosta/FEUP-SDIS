@@ -31,8 +31,6 @@ public class TestApp{
 				break;
 			case "RESTORE":
 				try{
-					System.out.println("RESTORE");
-					System.out.println(args[2]);
 					stub.restoreData(args[2]);
 				} catch (RemoteException exception) {
 	            	exception.printStackTrace();

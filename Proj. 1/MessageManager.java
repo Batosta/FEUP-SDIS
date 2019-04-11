@@ -114,11 +114,22 @@ public class MessageManager{
 
 	// GETCHUNK <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
 	public void manageGETCHUNK(){
-		System.out.println("GETCHUNK");
+		
+		// GETCHUNK version senderID fileID order
+
+		String str = Peer.getInstance().getServerID() + File.separator;
+		str += "backup" + File.separator;
+		str += headerData[3] + File.separator;
+		str += "chk" + headerData[4];
+		File auxFile = new File(str);
+
+		if(auxFile.exists()){
+
+			sendCHUNK();
+		}
 	}
 
-	//Não temos a certeza se é assim
-	private static void sendCHUNK(Chunk chunk){
+	private static void sendCHUNK(){
 
 		String chk = "CHUNK ";
 		chk += headerData[1];
@@ -131,15 +142,24 @@ public class MessageManager{
 		chk += " ";
 		chk += "\r\n\r\n";
 
-		byte[] chkBytes = chk.getBytes();
-		byte[] chunkContent = chunk.getContent();
-		byte[] combined = new byte[chkBytes.length + chunkContent.length];
+		System.out.println(Peer.getInstance().getServerID());
+		System.out.println(Peer.getInstance().getFileManager().getFile());
+		System.out.println(Peer.getInstance().getFileManager().getPath());
+		System.out.println(Peer.getInstance().getFileManager().getFileChunks());
+		System.out.println(Peer.getInstance().getFileManager().getNecessaryChunks());
+		System.out.println(Peer.getInstance().getFileManager().getFileID());
 
-		System.arraycopy(chkBytes, 0, combined, 0, chkBytes.length);
-		System.arraycopy(chunkContent, 0, combined, chkBytes.length, chunkContent.length);
+		// ir busrcar o body
+
+		// byte[] chkBytes = chk.getBytes();
+		// byte[] chunkContent = chunk.getContent();
+		// byte[] combined = new byte[chkBytes.length + chunkContent.length];
+
+		// System.arraycopy(chkBytes, 0, combined, 0, chkBytes.length);
+		// System.arraycopy(chunkContent, 0, combined, chkBytes.length, chunkContent.length);
 		
-		MulticastRestore mdr = Peer.getInstance().getMulticastRestore();
-		mdr.sendDatagramPacket(combined);
+		// MulticastRestore mdr = Peer.getInstance().getMulticastRestore();
+		// mdr.sendDatagramPacket(combined);
 	}
 
 	// CHUNK <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF><Body>

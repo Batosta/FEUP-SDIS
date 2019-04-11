@@ -26,13 +26,19 @@ public class FileManager{
 	private int necessaryChunks;
 	private String fileID;
 
-	public FileManager(String path) {
+	public FileManager() {
 
-		this.path = path;
-		this.file = new File(path);
+		this.path = null;
+		this.file = null;
 		this.fileChunks = new ArrayList<Chunk>();
 		this.necessaryChunks = 0;
 		this.fileID = "";
+	}
+
+	public void setFileManagerPath(String path) {
+
+		this.path = path;
+		this.file = new File(path);
 		createFileID();
 		createFileChunks();
 	}

@@ -23,6 +23,8 @@ public class Peer implements RMISystem{
 	private static int currentReplicationDegree;
 	private static int desiredReplicationDegree;
 
+	private static FileManager fileManager;
+
 	private static MulticastControl MC;			// Control Multicast
 	private static MulticastBackup MDB;			// Backup Multicast
 	private static MulticastRestore MDR;		// Restore Multicast
@@ -44,6 +46,7 @@ public class Peer implements RMISystem{
 			this.instance = this;
 			this.currentReplicationDegree = 0;
 			this.desiredReplicationDegree = 0;
+			this.fileManager = new FileManager();
 
 		} catch (Exception exc) {
 
@@ -92,11 +95,12 @@ public class Peer implements RMISystem{
 	}
  
 
+
 	public void backupData(String path, int repDeg){
 
 		try {
 
-			FileManager fileManager = new FileManager(path);
+			fileManager.setFileManagerPath(path);
 
 			int port = this.MDB.getPort();
 			InetAddress address = this.MDB.getAddress();
@@ -112,7 +116,7 @@ public class Peer implements RMISystem{
 				int waitingTime = 1000;
 				for (int j = 0; j < 5; j++) {
 					
-					byte[] buf = createPutchunkMessage(chunks.get(i), repDeg);
+					byte[] buf = createPUTCHUNKMessage(chunks.get(i), repDeg);
 
 					DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
 
@@ -140,12 +144,11 @@ public class Peer implements RMISystem{
 		}
 	}
 
-
 	public void deleteData(String path){
 		
 		try {
 
-			FileManager fileManager = new FileManager(path);
+			fileManager.setFileManagerPath(path);
 
 			int port = this.MC.getPort();
 			InetAddress address = this.MC.getAddress();
@@ -153,7 +156,7 @@ public class Peer implements RMISystem{
 
 			for(int i = 0; i < 5; i++){
 
-				byte[] buf = createDeleteMessage(fileManager.getFileID());
+				byte[] buf = createDELETEMessage(fileManager.getFileID());
 				DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
 				datagramSocket.send(datagramPacket);
 			}
@@ -163,16 +166,54 @@ public class Peer implements RMISystem{
 	}
 
 
+
+
 	public void restoreData(String path){
-		System.out.println("Peer RESTORE");
+		
+		System.out.println("Sup: " + path);
+		try {
+
+			fileManager.setFileManagerPath(path);
+			this.fileManager.setFileManagerPath(path);
+
+			int port = this.MC.getPort();
+			InetAddress address = this.MC.getAddress();
+			DatagramSocket datagramSocket = new DatagramSocket();
+
+			int chunksNumber = fileManager.getNecessaryChunks();
+			ArrayList<Chunk> chunks = fileManager.getFileChunks();
+
+			for(int i = 0; i < chunksNumber; i++){
+					
+				byte[] buf = createGETCHUNKMessage(chunks.get(i));
+
+				DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
+
+				datagramSocket.send(datagramPacket);
+			}
+
+		} catch (IOException exception) {
+			exception.printStackTrace();
+		}
 	}
+
+
+
+
+
+
+
+
+
+
+
 	public void reclaimSpace(int wantedSpace){
 		System.out.println("Peer RECLAIMS");
 	}
 
 
 	// PUTCHUNK <Version> <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
-	private byte[] createPutchunkMessage(Chunk chunk, int repDeg){
+	private byte[] createPUTCHUNKMessage(Chunk chunk, int repDeg){
 
 		setDesiredReplicationDegree(repDeg);
 
@@ -198,7 +239,7 @@ public class Peer implements RMISystem{
 		return combined;
 	}
 
-	private byte[] createGetChunkMessage(Chunk chunk){
+	private byte[] createGETCHUNKMessage(Chunk chunk){
 
 		String str = "GETCHUNK ";
 		str += this.protocolVersion;
@@ -215,7 +256,7 @@ public class Peer implements RMISystem{
 		return strBytes;
 	}
 
-	private byte[] createDeleteMessage(String fileID){
+	private byte[] createDELETEMessage(String fileID){
 
 		String str = "DELETE ";
 		str += this.protocolVersion;
@@ -229,7 +270,7 @@ public class Peer implements RMISystem{
 		return strBytes;
 	}
 
-	private byte[] createRemovedMessage(Chunk chunk){
+	private byte[] createREMOVEDMessage(Chunk chunk){
 
 		String str = "REMOVED ";
 		str += this.protocolVersion;
@@ -265,6 +306,10 @@ public class Peer implements RMISystem{
 	public MulticastRestore getMulticastRestore(){
 
 		return this.MDR;
+	}
+	public FileManager getFileManager(){
+
+		return this.fileManager;
 	}
 	public static Peer getInstance(){
 
