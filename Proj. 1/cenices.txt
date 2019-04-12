@@ -1,3 +1,3 @@
 criar os diretorios no construtor do peer
 
-no run do multicast cheira me que deviamos aumentar o tamanho do buffer porque 64k é só o body e ainda falta o header
+checkar cenas como se quando chega ao fim para construir o ficheiro restored se tem os chunks todos necessarios e se nao tiver mandar msgs de erro

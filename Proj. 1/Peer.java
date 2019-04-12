@@ -4,6 +4,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.net.*;
 import java.net.InetAddress;
+import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
@@ -23,7 +24,7 @@ public class Peer implements RMISystem{
 	private static int currentReplicationDegree;
 	private static int desiredReplicationDegree;
 
-	private static ArrayList<byte[]> restoredBytes;
+	private static HashMap<Integer, byte[]> restoredBytes;
 
 	private static FileManager fileManager;
 
@@ -49,7 +50,7 @@ public class Peer implements RMISystem{
 			currentReplicationDegree = 0;
 			desiredReplicationDegree = 0;
 			fileManager = new FileManager();
-			restoredBytes = new ArrayList<byte[]>();
+			restoredBytes = new HashMap<Integer, byte[]>();
 
 		} catch (Exception exc) {
 
@@ -305,10 +306,32 @@ public class Peer implements RMISystem{
 
 	private void buildRestoredFile(){
 
-		System.out.println("buildRestoredFile: " + restoredBytes.size());
-		for(int i = 0; i < restoredBytes.size(); i++){
+		String str = Peer.getInstance().getServerID() + File.separator;
+		str += "restored";
+		File newDirectory = new File(str);
+		newDirectory.mkdirs();
 
-			System.out.println(restoredBytes.get(i));
+
+		byte[] fileBytes = restoredBytes.get(0);
+
+		for(int i = 1; i < restoredBytes.size(); i++){
+
+			byte[] newBody = restoredBytes.get(i);
+			byte[] combined = new byte[fileBytes.length + newBody.length];
+
+			System.arraycopy(fileBytes, 0, combined, 0, fileBytes.length);
+			System.arraycopy(newBody, 0, combined, fileBytes.length, newBody.length);
+
+			fileBytes = combined.clone();
+		}
+
+		try{
+			File newFile = new File(str + File.separator + fileManager.getPath());
+			FileOutputStream fop = new FileOutputStream(newFile);
+			fop.write(fileBytes);
+			fop.close();
+		} catch (Exception exception) {
+			exception.printStackTrace();
 		}
 	}
 
@@ -357,12 +380,12 @@ public class Peer implements RMISystem{
 
 		desiredReplicationDegree = desired;
 	}
-	public static ArrayList<byte[]> getRestoredBytes(){
+	public static HashMap<Integer, byte[]> getRestoredBytes(){
 
 		return restoredBytes;
 	}
-	public static void appendToRestoredBytes(byte[] buf){
+	public static void appendToRestoredBytes(byte[] buf, int order){
 
-		restoredBytes.add(buf);
+		restoredBytes.put(order, buf);
 	}
 }

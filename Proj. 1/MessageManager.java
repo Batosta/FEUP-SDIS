@@ -171,7 +171,7 @@ public class MessageManager{
 	public void manageCHUNK(){
 		
 		if(headerData[2].equals(Peer.getInstance().getServerID())){
-			Peer.getInstance().appendToRestoredBytes(bodyData);
+			Peer.getInstance().appendToRestoredBytes(bodyData, Integer.parseInt(headerData[4]));
 		}
 	}
 
