@@ -4,6 +4,8 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.BufferedInputStream;
 import java.net.DatagramPacket;
 import java.util.Arrays;
 import java.util.Random;
@@ -104,7 +106,6 @@ public class MessageManager{
 		mc.sendDatagramPacket(storedBytes);
 	}
 
-	// STORED <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
 	public void manageSTORED(){
 		
 		if(headerData[2].equals(Peer.getInstance().getServerID())){
@@ -112,11 +113,8 @@ public class MessageManager{
 		}
 	}
 
-	// GETCHUNK <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
 	public void manageGETCHUNK(){
 		
-		// GETCHUNK version senderID fileID order
-
 		String str = Peer.getInstance().getServerID() + File.separator;
 		str += "backup" + File.separator;
 		str += headerData[3] + File.separator;
@@ -125,46 +123,56 @@ public class MessageManager{
 
 		if(auxFile.exists()){
 
-			sendCHUNK();
+			try{
+
+				FileInputStream fileInputStream = new FileInputStream(auxFile);
+				BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+
+				byte[] buf = new byte[64000];
+				bufferedInputStream.read(buf);
+
+				sendCHUNK(buf);
+
+			} catch(IOException exception){
+
+				exception.printStackTrace();
+			}
 		}
 	}
 
-	private static void sendCHUNK(){
+	private static void sendCHUNK(byte[] buf){
 
-		String chk = "CHUNK ";
-		chk += headerData[1];
-		chk += " ";
-		chk += headerData[2];
-		chk += " ";
-		chk += headerData[3];
-		chk += " ";
-		chk += headerData[4];
-		chk += " ";
-		chk += "\r\n\r\n";
+		String str = "CHUNK ";
+		str += headerData[1];
+		str += " ";
+		str += headerData[2];
+		str += " ";
+		str += headerData[3];
+		str += " ";
+		str += headerData[4];
+		str += " ";
+		str += "\r\n\r\n";
 
-		System.out.println(Peer.getInstance().getServerID());
-		System.out.println(Peer.getInstance().getFileManager().getFile());
-		System.out.println(Peer.getInstance().getFileManager().getPath());
-		System.out.println(Peer.getInstance().getFileManager().getFileChunks());
-		System.out.println(Peer.getInstance().getFileManager().getNecessaryChunks());
-		System.out.println(Peer.getInstance().getFileManager().getFileID());
+		byte[] strBytes = str.getBytes();
+		byte[] chunkContent = buf;
 
-		// ir busrcar o body
+		byte[] combined = new byte[strBytes.length + chunkContent.length];
 
-		// byte[] chkBytes = chk.getBytes();
-		// byte[] chunkContent = chunk.getContent();
-		// byte[] combined = new byte[chkBytes.length + chunkContent.length];
+		System.arraycopy(strBytes, 0, combined, 0, strBytes.length);
+		System.arraycopy(chunkContent, 0, combined, strBytes.length, chunkContent.length);
 
-		// System.arraycopy(chkBytes, 0, combined, 0, chkBytes.length);
-		// System.arraycopy(chunkContent, 0, combined, chkBytes.length, chunkContent.length);
-		
-		// MulticastRestore mdr = Peer.getInstance().getMulticastRestore();
-		// mdr.sendDatagramPacket(combined);
+		waitRandomTime();
+
+		MulticastRestore mdr = Peer.getInstance().getMulticastRestore();
+		// if(!mdr.checkForCHUNK())
+			mdr.sendDatagramPacket(combined);
 	}
 
-	// CHUNK <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF><Body>
 	public void manageCHUNK(){
-		System.out.println("CHUNK");
+		
+		if(headerData[2].equals(Peer.getInstance().getServerID())){
+			Peer.getInstance().appendToRestoredBytes(bodyData);
+		}
 	}
 
 	// DELETE <Version> <SenderId> <FileId> <CRLF><CRLF>

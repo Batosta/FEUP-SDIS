@@ -6,9 +6,9 @@ import java.net.InetAddress;
 // Implements Runnable so we are not really specialising the thread's behaviour
 public abstract class Multicast implements Runnable {
 
-	private int port;
+	public int port;
 	public MulticastSocket multicastSocket;
-	private InetAddress address;
+	public InetAddress address;
 
 	public Multicast(InetAddress address, int port){
 
@@ -20,7 +20,7 @@ public abstract class Multicast implements Runnable {
 	public void run(){
 
 		multicastSocketOpening();
-		byte[] buffer = new byte[64000];	// The maximum size of each chunks 64KByte (where K stands for 1000)
+		byte[] buffer = new byte[65000];	// The maximum size of each chunks 64KByte (where K stands for 1000)
 		while(true){
 
 			try {
@@ -29,8 +29,6 @@ public abstract class Multicast implements Runnable {
 				multicastSocket.receive(datagramPacket);
 
 				MessageManager messageManager = new MessageManager(datagramPacket);
-
-				// missing something
 
 			} catch (IOException exception) {
 				exception.printStackTrace();	// Method on Exception instances that prints the stack trace of the instance to System.err

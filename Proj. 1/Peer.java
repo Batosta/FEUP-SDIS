@@ -23,6 +23,8 @@ public class Peer implements RMISystem{
 	private static int currentReplicationDegree;
 	private static int desiredReplicationDegree;
 
+	private static ArrayList<byte[]> restoredBytes;
+
 	private static FileManager fileManager;
 
 	private static MulticastControl MC;			// Control Multicast
@@ -40,13 +42,14 @@ public class Peer implements RMISystem{
 			InetAddress mdbIpAddress = InetAddress.getByName(ipAddressMDB);
 			InetAddress mdrIpAddress = InetAddress.getByName(ipAddressMDR);
 
-			this.MC = new MulticastControl(mcIpAddress, portMC);
-			this.MDB = new MulticastBackup(mdbIpAddress, portMDB);
-			this.MDR = new MulticastRestore(mdrIpAddress, portMDR);
-			this.instance = this;
-			this.currentReplicationDegree = 0;
-			this.desiredReplicationDegree = 0;
-			this.fileManager = new FileManager();
+			MC = new MulticastControl(mcIpAddress, portMC);
+			MDB = new MulticastBackup(mdbIpAddress, portMDB);
+			MDR = new MulticastRestore(mdrIpAddress, portMDR);
+			instance = this;
+			currentReplicationDegree = 0;
+			desiredReplicationDegree = 0;
+			fileManager = new FileManager();
+			restoredBytes = new ArrayList<byte[]>();
 
 		} catch (Exception exc) {
 
@@ -102,8 +105,8 @@ public class Peer implements RMISystem{
 
 			fileManager.setFileManagerPath(path);
 
-			int port = this.MDB.getPort();
-			InetAddress address = this.MDB.getAddress();
+			int port = MDB.getPort();
+			InetAddress address = MDB.getAddress();
 			DatagramSocket datagramSocket = new DatagramSocket();
 
 			int chunksNumber = fileManager.getNecessaryChunks();
@@ -150,8 +153,8 @@ public class Peer implements RMISystem{
 
 			fileManager.setFileManagerPath(path);
 
-			int port = this.MC.getPort();
-			InetAddress address = this.MC.getAddress();
+			int port = MC.getPort();
+			InetAddress address = MC.getAddress();
 			DatagramSocket datagramSocket = new DatagramSocket();
 
 			for(int i = 0; i < 5; i++){
@@ -168,16 +171,20 @@ public class Peer implements RMISystem{
 
 
 
+
+
+
+
+
+
 	public void restoreData(String path){
 		
-		System.out.println("Sup: " + path);
 		try {
 
 			fileManager.setFileManagerPath(path);
-			this.fileManager.setFileManagerPath(path);
 
-			int port = this.MC.getPort();
-			InetAddress address = this.MC.getAddress();
+			int port = MC.getPort();
+			InetAddress address = MC.getAddress();
 			DatagramSocket datagramSocket = new DatagramSocket();
 
 			int chunksNumber = fileManager.getNecessaryChunks();
@@ -192,11 +199,20 @@ public class Peer implements RMISystem{
 				datagramSocket.send(datagramPacket);
 			}
 
+			System.out.println("SleepStart");
+			try{
+				Thread.sleep(5000);
+			} catch(InterruptedException exception){
+				exception.printStackTrace();
+			}
+			System.out.println("SleepEnd");
+
+			buildRestoredFile();
+
 		} catch (IOException exception) {
 			exception.printStackTrace();
 		}
 	}
-
 
 
 
@@ -218,9 +234,9 @@ public class Peer implements RMISystem{
 		setDesiredReplicationDegree(repDeg);
 
 		String str = "PUTCHUNK ";
-		str += this.protocolVersion;
+		str += protocolVersion;
 		str += " ";
-		str += this.serverID;
+		str += serverID;
 		str += " ";
 		str += chunk.getFileID();
 		str += " ";
@@ -242,9 +258,9 @@ public class Peer implements RMISystem{
 	private byte[] createGETCHUNKMessage(Chunk chunk){
 
 		String str = "GETCHUNK ";
-		str += this.protocolVersion;
+		str += protocolVersion;
 		str += " ";
-		str += this.serverID;
+		str += serverID;
 		str += " ";
 		str += chunk.getFileID();
 		str += " ";
@@ -259,9 +275,9 @@ public class Peer implements RMISystem{
 	private byte[] createDELETEMessage(String fileID){
 
 		String str = "DELETE ";
-		str += this.protocolVersion;
+		str += protocolVersion;
 		str += " ";
-		str += this.serverID;
+		str += serverID;
 		str += " ";
 		str += fileID;
 		str += "\r\n\r\n";
@@ -273,9 +289,9 @@ public class Peer implements RMISystem{
 	private byte[] createREMOVEDMessage(Chunk chunk){
 
 		String str = "REMOVED ";
-		str += this.protocolVersion;
+		str += protocolVersion;
 		str += " ";
-		str += this.serverID;
+		str += serverID;
 		str += " ";
 		str += chunk.getFileID();
 		str += " ";
@@ -287,29 +303,39 @@ public class Peer implements RMISystem{
 	}
 
 
-	public String getServerID(){
+	private void buildRestoredFile(){
 
-		return this.serverID;
+		System.out.println("buildRestoredFile: " + restoredBytes.size());
+		for(int i = 0; i < restoredBytes.size(); i++){
+
+			System.out.println(restoredBytes.get(i));
+		}
 	}
-	public double getProtocolVersion(){
 
-		return this.protocolVersion;
+
+	public static String getServerID(){
+
+		return serverID;
 	}
-	public MulticastControl getMulticastControl(){
+	public static double getProtocolVersion(){
 
-		return this.MC;
+		return protocolVersion;
 	}
-	public MulticastBackup getMulticastBackup(){
+	public static MulticastControl getMulticastControl(){
 
-		return this.MDB;
+		return MC;
 	}
-	public MulticastRestore getMulticastRestore(){
+	public static MulticastBackup getMulticastBackup(){
 
-		return this.MDR;
+		return MDB;
 	}
-	public FileManager getFileManager(){
+	public static MulticastRestore getMulticastRestore(){
 
-		return this.fileManager;
+		return MDR;
+	}
+	public static FileManager getFileManager(){
+
+		return fileManager;
 	}
 	public static Peer getInstance(){
 
@@ -330,5 +356,13 @@ public class Peer implements RMISystem{
 	public static void setDesiredReplicationDegree(int desired){
 
 		desiredReplicationDegree = desired;
+	}
+	public static ArrayList<byte[]> getRestoredBytes(){
+
+		return restoredBytes;
+	}
+	public static void appendToRestoredBytes(byte[] buf){
+
+		restoredBytes.add(buf);
 	}
 }
