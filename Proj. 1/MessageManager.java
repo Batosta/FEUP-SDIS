@@ -10,7 +10,6 @@ import java.net.DatagramPacket;
 import java.util.Arrays;
 import java.util.Random;
 
-
 public class MessageManager{
 
 	private DatagramPacket datagramPacket;
@@ -52,7 +51,7 @@ public class MessageManager{
 				Delete.getInstance().manageDELETE(headerData[3]);
 				break;
 			case "REMOVED": 
-				manageREMOVED();
+				Reclaim.getInstance().manageREMOVED(headerData[3], Integer.parseInt(headerData[4]));
 				break;
 			default: 
 				break;
@@ -179,13 +178,6 @@ public class MessageManager{
 			Restore.getInstance().appendToRestoredBytes(bodyData, Integer.parseInt(headerData[4]));
 		}
 	}
-
-	// REMOVED <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
-	public void manageREMOVED(){
-
-		System.out.println("REMOVED");
-	}
-
 
 	// Function to parse the header of the messages received
 	private void manageHeader(){

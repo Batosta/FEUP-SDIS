@@ -15,6 +15,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Collections;
 
 public class FileManager{
 
@@ -158,5 +160,33 @@ public class FileManager{
     public String getFileID(){
     	
     	return this.fileID;
+    }
+
+    public long getUsedSpace(){
+    	
+    	if(this.fileChunks.isEmpty()){
+    		System.out.println("No stored chunks!");
+    		return 0;
+    	}
+
+    	long totalSpace = 0;
+
+    	for(int i = 0; i < this.fileChunks.size(); i++){
+    		totalSpace += this.fileChunks.get(i).getSize();
+    	}
+    	return totalSpace;
+    }
+
+    public Chunk getMaxSizeChunk(){
+
+    	if(this.fileChunks.isEmpty()){
+    		System.out.println("No stored chunks!");
+    		return null;
+    	}
+
+    	Chunk chunk = Collections.max(this.fileChunks, Comparator.comparing(c -> c.getSize()));
+
+    	return chunk;
+
     }
 }
