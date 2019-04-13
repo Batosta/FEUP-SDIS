@@ -49,7 +49,7 @@ public class MessageManager{
 				manageCHUNK();
 				break;
 			case "DELETE":
-				manageDELETE();
+				Delete.getInstance().manageDELETE(headerData[3]);
 				break;
 			case "REMOVED": 
 				manageREMOVED();
@@ -63,13 +63,15 @@ public class MessageManager{
 		
 		if(!headerData[2].equals(Peer.getInstance().getServerID())){
 
-			String str = Peer.getInstance().getServerID() + File.separator + "backup" + File.separator + headerData[3];
-			File newDirectory = new File(str);
-			newDirectory.mkdirs();
-
 			try{
 
-				File newFile = new File(str + File.separator + "chk" + headerData[4]);
+				String str = Peer.getInstance().getServerID() + File.separator + "backup";
+				str += File.separator + headerData[3];
+				File newFileDirectory = new File(str);
+				newFileDirectory.mkdir();
+				
+				str += File.separator + "chk" + headerData[4];
+				File newFile = new File(str);
 				if(!newFile.exists()){
 					
 					FileOutputStream fop = new FileOutputStream(newFile);
@@ -109,7 +111,7 @@ public class MessageManager{
 	public void manageSTORED(){
 		
 		if(headerData[2].equals(Peer.getInstance().getServerID())){
-			Peer.getInstance().incrementCurrentReplicationDegree();
+			Backup.getInstance().incrementCurrentReplicationDegree();
 		}
 	}
 
@@ -121,6 +123,7 @@ public class MessageManager{
 		str += "chk" + headerData[4];
 		File auxFile = new File(str);
 
+
 		if(auxFile.exists()){
 
 			try{
@@ -128,7 +131,9 @@ public class MessageManager{
 				FileInputStream fileInputStream = new FileInputStream(auxFile);
 				BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
 
+				// trocar pelo que está comentado por baixo
 				byte[] buf = new byte[64000];
+				// byte[] buf = new byte[auxFile.length()];
 				bufferedInputStream.read(buf);
 
 				sendCHUNK(buf);
@@ -171,25 +176,13 @@ public class MessageManager{
 	public void manageCHUNK(){
 		
 		if(headerData[2].equals(Peer.getInstance().getServerID())){
-			Peer.getInstance().appendToRestoredBytes(bodyData, Integer.parseInt(headerData[4]));
-		}
-	}
-
-	// DELETE <Version> <SenderId> <FileId> <CRLF><CRLF>
-	public void manageDELETE(){
-
-		String str = Peer.getInstance().getServerID() + File.separator + "backup" + File.separator + headerData[3];
-		File toBeDeleteDirectory = new File(str);
-
-		String[]entries = toBeDeleteDirectory.list();
-		for(String s: entries){
-		    File currentFile = new File(toBeDeleteDirectory.getPath(),s);
-		    currentFile.delete();
+			Restore.getInstance().appendToRestoredBytes(bodyData, Integer.parseInt(headerData[4]));
 		}
 	}
 
 	// REMOVED <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
 	public void manageREMOVED(){
+
 		System.out.println("REMOVED");
 	}
 

@@ -4,12 +4,6 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.net.*;
 import java.net.InetAddress;
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 
 public class Peer implements RMISystem{
@@ -21,19 +15,14 @@ public class Peer implements RMISystem{
 	private static String serverID; 			// Peer + identifier
 	private static double protocolVersion;		// Protocol version
 
-	private static int currentReplicationDegree;
-	private static int desiredReplicationDegree;
-
-	private static HashMap<Integer, byte[]> restoredBytes;
-
-	private static FileManager fileManager;
-
 	private static MulticastControl MC;			// Control Multicast
 	private static MulticastBackup MDB;			// Backup Multicast
 	private static MulticastRestore MDR;		// Restore Multicast
-	
-	private static ScheduledThreadPoolExecutor executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(MAX_THREADS);
 
+	private static Backup backupProtocol;
+	private static Delete deleteProtocol;
+	private static Restore restoreProtocol;
+	
 
 	private Peer(String ipAddressMC, int portMC, String ipAddressMDB, int portMDB, String ipAddressMDR, int portMDR) {
 
@@ -46,11 +35,14 @@ public class Peer implements RMISystem{
 			MC = new MulticastControl(mcIpAddress, portMC);
 			MDB = new MulticastBackup(mdbIpAddress, portMDB);
 			MDR = new MulticastRestore(mdrIpAddress, portMDR);
+
 			instance = this;
-			currentReplicationDegree = 0;
-			desiredReplicationDegree = 0;
-			fileManager = new FileManager();
-			restoredBytes = new HashMap<Integer, byte[]>();
+			
+			backupProtocol = new Backup("", 0);
+			deleteProtocol = new Delete("");
+			restoreProtocol = new Restore("");
+
+			createNeededDirectories();
 
 		} catch (Exception exc) {
 
@@ -91,201 +83,44 @@ public class Peer implements RMISystem{
 
         // deserializeStorage(); //loads storage
 
-        executor.execute(MC);
-        executor.execute(MDB);
-        executor.execute(MDR);
+        // executor.execute(MC);
+        // executor.execute(MDB);
+        // executor.execute(MDR);
+
+        new Thread(MC).start();
+        new Thread(MDB).start();
+		new Thread(MDR).start();
 
         // Runtime.getRuntime().addShutdownHook(new Thread(Peer::serializeStorage)); //if CTRL-C is pressed when a Peer is running, it saves his storage so it can be loaded next time it runs
 	}
- 
 
 
 	public void backupData(String path, int repDeg){
 
-		try {
-
-			fileManager.setFileManagerPath(path);
-
-			int port = MDB.getPort();
-			InetAddress address = MDB.getAddress();
-			DatagramSocket datagramSocket = new DatagramSocket();
-
-			int chunksNumber = fileManager.getNecessaryChunks();
-			ArrayList<Chunk> chunks = fileManager.getFileChunks();
-
-			for(int i = 0; i < chunksNumber; i++){
-
-				currentReplicationDegree = 0;
-				desiredReplicationDegree = 0;
-				int waitingTime = 1000;
-				for (int j = 0; j < 5; j++) {
-					
-					byte[] buf = createPUTCHUNKMessage(chunks.get(i), repDeg);
-
-					DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
-
-					datagramSocket.send(datagramPacket);
-
-					try{
-
-						Thread.sleep(waitingTime);
-						waitingTime *= 2;
-					} catch(InterruptedException exception){
-						
-						exception.printStackTrace();
-					}
-
-					if(currentReplicationDegree >= desiredReplicationDegree){
-
-						break;
-					}
-					currentReplicationDegree = 0;
-				}
-			}
-
-		} catch (IOException exception) {
-			exception.printStackTrace();
-		}
+		Backup backupProtocol = new Backup(path, repDeg);
+		new Thread(backupProtocol).start();
 	}
 
 	public void deleteData(String path){
 		
-		try {
-
-			fileManager.setFileManagerPath(path);
-
-			int port = MC.getPort();
-			InetAddress address = MC.getAddress();
-			DatagramSocket datagramSocket = new DatagramSocket();
-
-			for(int i = 0; i < 5; i++){
-
-				byte[] buf = createDELETEMessage(fileManager.getFileID());
-				DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
-				datagramSocket.send(datagramPacket);
-			}
-		} catch (IOException exception) {
-			exception.printStackTrace();
-		}
+		deleteProtocol = new Delete(path);
+		new Thread(deleteProtocol).start();
 	}
-
-
-
-
-
-
-
-
-
 
 	public void restoreData(String path){
 		
-		try {
-
-			fileManager.setFileManagerPath(path);
-
-			int port = MC.getPort();
-			InetAddress address = MC.getAddress();
-			DatagramSocket datagramSocket = new DatagramSocket();
-
-			int chunksNumber = fileManager.getNecessaryChunks();
-			ArrayList<Chunk> chunks = fileManager.getFileChunks();
-
-			for(int i = 0; i < chunksNumber; i++){
-					
-				byte[] buf = createGETCHUNKMessage(chunks.get(i));
-
-				DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
-
-				datagramSocket.send(datagramPacket);
-			}
-
-			System.out.println("SleepStart");
-			try{
-				Thread.sleep(5000);
-			} catch(InterruptedException exception){
-				exception.printStackTrace();
-			}
-			System.out.println("SleepEnd");
-
-			buildRestoredFile();
-
-		} catch (IOException exception) {
-			exception.printStackTrace();
-		}
+		restoreProtocol = new Restore(path);
+		new Thread(restoreProtocol).start();
 	}
-
-
-
-
-
-
-
 
 
 
 	public void reclaimSpace(int wantedSpace){
+		
 		System.out.println("Peer RECLAIMS");
 	}
 
 
-	// PUTCHUNK <Version> <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
-	private byte[] createPUTCHUNKMessage(Chunk chunk, int repDeg){
-
-		setDesiredReplicationDegree(repDeg);
-
-		String str = "PUTCHUNK ";
-		str += protocolVersion;
-		str += " ";
-		str += serverID;
-		str += " ";
-		str += chunk.getFileID();
-		str += " ";
-		str += chunk.getOrder();
-		str += " ";
-		str += Integer.toString(repDeg);
-		str += " ";
-		str += "\r\n\r\n";
-
-		byte[] strBytes = str.getBytes();
-		byte[] chunkContent = chunk.getContent();
-		byte[] combined = new byte[strBytes.length + chunkContent.length];
-
-		System.arraycopy(strBytes, 0, combined, 0, strBytes.length);
-		System.arraycopy(chunkContent, 0, combined, strBytes.length, chunkContent.length);
-		return combined;
-	}
-
-	private byte[] createGETCHUNKMessage(Chunk chunk){
-
-		String str = "GETCHUNK ";
-		str += protocolVersion;
-		str += " ";
-		str += serverID;
-		str += " ";
-		str += chunk.getFileID();
-		str += " ";
-		str += chunk.getOrder();
-		str += " ";
-		str += "\r\n\r\n";
-
-		byte[] strBytes = str.getBytes();
-		return strBytes;
-	}
-
-	private byte[] createDELETEMessage(String fileID){
-
-		String str = "DELETE ";
-		str += protocolVersion;
-		str += " ";
-		str += serverID;
-		str += " ";
-		str += fileID;
-		str += "\r\n\r\n";
-
-		byte[] strBytes = str.getBytes();
-		return strBytes;
-	}
 
 	private byte[] createREMOVEDMessage(Chunk chunk){
 
@@ -304,35 +139,18 @@ public class Peer implements RMISystem{
 	}
 
 
-	private void buildRestoredFile(){
+	private void createNeededDirectories(){
 
-		String str = Peer.getInstance().getServerID() + File.separator;
-		str += "restored";
-		File newDirectory = new File(str);
-		newDirectory.mkdirs();
-
-
-		byte[] fileBytes = restoredBytes.get(0);
-
-		for(int i = 1; i < restoredBytes.size(); i++){
-
-			byte[] newBody = restoredBytes.get(i);
-			byte[] combined = new byte[fileBytes.length + newBody.length];
-
-			System.arraycopy(fileBytes, 0, combined, 0, fileBytes.length);
-			System.arraycopy(newBody, 0, combined, fileBytes.length, newBody.length);
-
-			fileBytes = combined.clone();
-		}
-
-		try{
-			File newFile = new File(str + File.separator + fileManager.getPath());
-			FileOutputStream fop = new FileOutputStream(newFile);
-			fop.write(fileBytes);
-			fop.close();
-		} catch (Exception exception) {
-			exception.printStackTrace();
-		}
+		String commonStr = this.serverID + File.separator;
+		
+		String backupStr = commonStr + "backup";
+		String restoredStr = commonStr + "restored";
+		
+		File backupDirectory = new File(backupStr);
+		File restoredDirectory = new File(restoredStr);
+		
+		backupDirectory.mkdirs();
+		restoredDirectory.mkdirs();
 	}
 
 
@@ -356,36 +174,8 @@ public class Peer implements RMISystem{
 
 		return MDR;
 	}
-	public static FileManager getFileManager(){
-
-		return fileManager;
-	}
 	public static Peer getInstance(){
 
 		return instance;
-	}
-	public static int getCurrentReplicationDegree(){
-
-		return currentReplicationDegree;
-	}
-	public static int getDesiredReplicationDegree(){
-
-		return desiredReplicationDegree;
-	}
-	public static void incrementCurrentReplicationDegree(){
-
-		currentReplicationDegree++;
-	}
-	public static void setDesiredReplicationDegree(int desired){
-
-		desiredReplicationDegree = desired;
-	}
-	public static HashMap<Integer, byte[]> getRestoredBytes(){
-
-		return restoredBytes;
-	}
-	public static void appendToRestoredBytes(byte[] buf, int order){
-
-		restoredBytes.put(order, buf);
 	}
 }
