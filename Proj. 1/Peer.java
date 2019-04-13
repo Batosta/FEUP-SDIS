@@ -22,6 +22,7 @@ public class Peer implements RMISystem{
 	private static Backup backupProtocol;
 	private static Delete deleteProtocol;
 	private static Restore restoreProtocol;
+	private static Reclaim reclaimProtocol;
 	
 
 	private Peer(String ipAddressMC, int portMC, String ipAddressMDB, int portMDB, String ipAddressMDR, int portMDR) {
@@ -114,10 +115,10 @@ public class Peer implements RMISystem{
 	}
 
 
-
 	public void reclaimSpace(int wantedSpace){
 		
-		System.out.println("Peer RECLAIMS");
+		reclaimProtocol = new Reclaim(wantedSpace);
+		new Thread(restoreProtocol).start();
 	}
 
 

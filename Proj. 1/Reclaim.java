@@ -27,6 +27,8 @@ public class Reclaim implements Runnable{
 
 		try {
 
+			System.out.println("Initiate RECLAIM Protocol: " + this.wantedSpace);
+
 			long totalSpace = this.wantedSpace * 1000; //Bytes
 
 			int port = this.peer.getMulticastControl().getPort();
@@ -40,8 +42,13 @@ public class Reclaim implements Runnable{
 				String fileID = chunkToDelete.getFileID();
 				int chunkID = chunkToDelete.getOrder();
 
+				System.out.println("Chunk fileID: " + fileID);
+				System.out.println("Chunk chunkID: " + chunkID);;
+
 				byte[] buf = createREMOVEDMessage(chunkToDelete);
 				DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
+
+				System.out.println(buf);
 
 				datagramSocket.send(datagramPacket);
 
