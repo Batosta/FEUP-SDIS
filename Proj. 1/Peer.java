@@ -42,6 +42,7 @@ public class Peer implements RMISystem{
 			backupProtocol = new Backup("", 0);
 			deleteProtocol = new Delete("");
 			restoreProtocol = new Restore("");
+			reclaimProtocol = new Reclaim(0);
 
 			createNeededDirectories();
 
@@ -114,29 +115,10 @@ public class Peer implements RMISystem{
 		new Thread(restoreProtocol).start();
 	}
 
-
 	public void reclaimSpace(int wantedSpace){
 		
 		reclaimProtocol = new Reclaim(wantedSpace);
-		new Thread(restoreProtocol).start();
-	}
-
-
-
-	private byte[] createREMOVEDMessage(Chunk chunk){
-
-		String str = "REMOVED ";
-		str += protocolVersion;
-		str += " ";
-		str += serverID;
-		str += " ";
-		str += chunk.getFileID();
-		str += " ";
-		str += chunk.getOrder();
-		str += "\r\n\r\n";
-
-		byte[] strBytes = str.getBytes();
-		return strBytes;
+		new Thread(reclaimProtocol).start();
 	}
 
 
@@ -153,7 +135,6 @@ public class Peer implements RMISystem{
 		backupDirectory.mkdirs();
 		restoredDirectory.mkdirs();
 	}
-
 
 	public static String getServerID(){
 

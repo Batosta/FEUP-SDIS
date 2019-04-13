@@ -9,8 +9,6 @@ public class Reclaim implements Runnable{
 
 	private static Reclaim instance;
 
-	private FileManager fileManager;
-
 	private Peer peer;
 
 	private int wantedSpace;
@@ -18,7 +16,6 @@ public class Reclaim implements Runnable{
 	public Reclaim(int wantedSpace){
 
 		instance = this;
-		this.fileManager = new FileManager();
 		this.peer = Peer.getInstance();
 		this.wantedSpace = wantedSpace;
 	}
@@ -27,50 +24,68 @@ public class Reclaim implements Runnable{
 
 		try {
 
-			System.out.println("Initiate RECLAIM Protocol: " + this.wantedSpace);
-
-			long totalSpace = this.wantedSpace * 1000; //Bytes
+			int totalSpace = this.wantedSpace * 1000; //Bytes
+			int usedSpace = 0;
 
 			int port = this.peer.getMulticastControl().getPort();
 			InetAddress address = this.peer.getMulticastControl().getAddress();
 			DatagramSocket datagramSocket = new DatagramSocket();
 
-			while(this.fileManager.getUsedSpace() > totalSpace){
+			String str = this.peer.getServerID() + File.separator + "backup";
+			File backupDirectory = new File(str);
+			String[] backupEntries = backupDirectory.list();
 
-				Chunk chunkToDelete = this.fileManager.getMaxSizeChunk();
+			if(backupEntries != null){	// in case there are files saved in the backup directory 
 
-				String fileID = chunkToDelete.getFileID();
-				int chunkID = chunkToDelete.getOrder();
+				for(String fileEntry: backupEntries){
 
-				System.out.println("Chunk fileID: " + fileID);
-				System.out.println("Chunk chunkID: " + chunkID);;
+					String strAux = str + File.separator + fileEntry;
+					File backupFileDirectory = new File(strAux);
+					String[] backupFileEntries = backupFileDirectory.list();
+					if(backupFileEntries != null){	// in case there are chunks saved in the file of the backup directory
 
-				byte[] buf = createREMOVEDMessage(chunkToDelete);
-				DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
+						for(String chunkEntry: backupFileEntries){
 
-				System.out.println(buf);
+							String strAuxAux = strAux + File.separator + chunkEntry;
+							File currentChunk = new File(strAuxAux);	// estou num chunk
 
-				datagramSocket.send(datagramPacket);
+							if((usedSpace + currentChunk.length()) > totalSpace){
 
+								currentChunk.delete();
+
+								byte[] buf = createREMOVEDMessage(fileEntry, chunkEntry.substring(3));
+
+								// DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
+
+								// datagramSocket.send(datagramPacket);
+								
+							} else{
+
+								usedSpace += currentChunk.length();
+							}
+						}
+					}
+				}
 			}
-
 		} catch (IOException exception) {
 			exception.printStackTrace();
 		}
 	}
 
 
-	private byte[] createREMOVEDMessage(Chunk chunk){
+	// REMOVED <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
+	private byte[] createREMOVEDMessage(String fileID, String order){
 		
 		String str = "REMOVED ";
 		str += this.peer.getProtocolVersion();
 		str += " ";
 		str += this.peer.getServerID();
 		str += " ";
-		str += chunk.getFileID();
+		str += fileID;
 		str += " ";
-		str += chunk.getOrder();
+		str += order;
 		str += " ";
+		System.out.println(str);
 		str += "\r\n\r\n";
 
 		byte[] strBytes = str.getBytes();

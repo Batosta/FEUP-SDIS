@@ -45,8 +45,6 @@ public class TestApp{
 				break;
 			case "RECLAIM":
 				try{
-					System.out.println("RESTORE");
-					System.out.println(Integer.parseInt(args[2]));
 					stub.reclaimSpace(Integer.parseInt(args[2]));
 				} catch (RemoteException exception) {
 	            	exception.printStackTrace();
