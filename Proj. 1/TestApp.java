@@ -50,6 +50,13 @@ public class TestApp{
 	            	exception.printStackTrace();
 	            }
 				break;
+			case "STATE":
+				try{
+					stub.peerState();
+				} catch (RemoteException exception) {
+	            	exception.printStackTrace();
+	            }
+				break;
 			default:
 				break;
 		}
@@ -57,17 +64,17 @@ public class TestApp{
 
 	public static void main(String[] args){
 
-		if(args.length != 3 && args.length != 4){
+		if(args.length != 2 && args.length != 3 && args.length != 4){
 
 			System.out.println("Usage:\n");
 			System.out.println("java TestApp <peer_ap> <sub_protocol> <opnd_1> <opnd_2>");
 			return;
 		}
 		type = args[1];
-		if(!type.equals("BACKUP") && !type.equals("RESTORE") && !type.equals("DELETE") && !type.equals("RECLAIM")){
+		if(!type.equals("STATE") && !type.equals("BACKUP") && !type.equals("RESTORE") && !type.equals("DELETE") && !type.equals("RECLAIM")){
 
 			System.out.println("Possible operations:\n");
-			System.out.println("BACKUP | RESTORE | DELETE | RECLAIM");
+			System.out.println("BACKUP | RESTORE | DELETE | RECLAIM | STATE");
 			return;
 		}
 		TestApp testApp = new TestApp(args);

@@ -7,4 +7,5 @@ public interface RMISystem extends Remote {
 	void deleteData(String path) throws RemoteException;
 	void restoreData(String path) throws RemoteException;
 	void reclaimSpace(int spaceReclaimed) throws RemoteException;
+	void peerState() throws RemoteException;
 }

@@ -21,7 +21,6 @@ public class Backup implements Runnable{
 	private int desiredReplicationDegree;
 
 
-
 	public Backup(String backupPath, int backupRepDeg){
 
 		instance = this;
@@ -32,13 +31,19 @@ public class Backup implements Runnable{
 
 		this.currentReplicationDegree = 0;
 		this.desiredReplicationDegree = 0;
+
+		if(!this.path.equals("")){
+
+			this.fileManager.setFileManagerPath(this.path);
+
+			this.peer.setPathFileID(this.path, this.fileManager.getFileID());
+			this.peer.createBackupFileDesiredRepDeg(this.path, this.repDeg);
+		}
 	}
 
 	public void run(){
 
 		try {
-
-			this.fileManager.setFileManagerPath(this.path);
 
 			int port = this.peer.getMulticastBackup().getPort();
 			InetAddress address = this.peer.getMulticastBackup().getAddress();
@@ -73,12 +78,12 @@ public class Backup implements Runnable{
 
 					if(this.currentReplicationDegree >= this.desiredReplicationDegree){
 
+						this.peer.addBackupFileCurrentRepDeg(this.path, chunks.get(i).getOrder(), this.currentReplicationDegree);
 						break;
 					}
 					this.currentReplicationDegree = 0;
 				}
 			}
-
 		} catch (IOException exception) {
 			exception.printStackTrace();
 		}

@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 
-// @SuppressWarnings("unchecked")
+@SuppressWarnings("unchecked")
 public class Peer implements RMISystem{
 
 	private static int MAX_THREADS = 100;
@@ -30,8 +30,8 @@ public class Peer implements RMISystem{
 	private static Reclaim reclaimProtocol;
 
 	private static ConcurrentHashMap<String, String> pathFileID; // path, fileID
-	private static ConcurrentHashMap<String, ArrayList<Integer>> backupFileChunks; // <path, indexes of all filedID's chunks saved in this peer>
 	private static ConcurrentHashMap<String, Integer> backupFileDesiredRepDeg; // <path, desiredRepDeg>
+	private static ConcurrentHashMap<String, ArrayList<Integer>> backupFileChunks; // <fileID, indexes of all filedID's chunks saved in this peer>
 	private static ConcurrentHashMap<Map<String, Integer>, Integer> backupFileCurrentRepDeg; // <Map<path, index>, currentRepDeg
 
 
@@ -56,11 +56,11 @@ public class Peer implements RMISystem{
 
 			createNeededDirectories();
 
-			pathFileID = new ConcurrentHashMap<String, String>();
-			backupFileChunks = new ConcurrentHashMap<String, ArrayList<Integer>>();
-			backupFileDesiredRepDeg = new ConcurrentHashMap<String, Integer>();
-			backupFileCurrentRepDeg = new ConcurrentHashMap<Map<String, Integer>, Integer>();
-
+			loadFromDisk();
+			System.out.println(pathFileID);
+			System.out.println(backupFileDesiredRepDeg);
+			System.out.println(backupFileChunks);
+			System.out.println(backupFileCurrentRepDeg);
 		} catch (Exception exc) {
 
  			System.err.println(exc);
@@ -110,7 +110,7 @@ public class Peer implements RMISystem{
 
 	public void backupData(String path, int repDeg){
 
-		Backup backupProtocol = new Backup(path, repDeg);
+		backupProtocol = new Backup(path, repDeg);
 		new Thread(backupProtocol).start();
 	}
 
@@ -132,8 +132,35 @@ public class Peer implements RMISystem{
 		new Thread(reclaimProtocol).start();
 	}
 
+	/*
+	For each file whose backup it has initiated:
+		The file pathname
+		The backup service id of the file
+		The desired replication degree
+		For each chunk of the file:
+		Its id
+		Its perceived replication degree
+	For each chunk it stores:
+		Its id
+		Its size (in KBytes)
+		Its perceived replication degree
+	The peer's storage capacity, i.e. the maximum amount of disk space that can be used to store 
+	chunks, and the amount of storage (both in KBytes) used to backup the chunks.
+	*/
+
+	public void peerState(){
+		
+		for (Object o : pathFileID.entrySet()) {
+
+			System.out.println(o);
+		}
+	}
+
 
 	private void createNeededDirectories(){
+
+		File databaseDirectory = new File("db" + File.separator + this.serverID);
+		databaseDirectory.mkdirs();
 
 		String commonStr = this.serverID + File.separator;
 		
@@ -145,6 +172,108 @@ public class Peer implements RMISystem{
 		
 		backupDirectory.mkdirs();
 		restoredDirectory.mkdirs();
+	}
+
+	private static void loadFromDisk(){
+
+		FileInputStream fileInputStream = null;
+		ObjectInputStream objectInputStream = null;
+		String str = "db" + File.separator + serverID + File.separator;
+		File file = null;
+
+		try{
+
+			file = new File(str + "pathFileID.ser");
+			if(file.exists()){
+				
+				fileInputStream = new FileInputStream(str + "pathFileID.ser");
+		        objectInputStream = new ObjectInputStream(fileInputStream);
+		        pathFileID = (ConcurrentHashMap<String, String>)objectInputStream.readObject();
+		    } else
+		    	pathFileID = new ConcurrentHashMap<String, String>();
+
+
+		    file = new File(str + "backupFileDesiredRepDeg.ser");
+		    if(file.exists()){
+		        
+		        fileInputStream = new FileInputStream(str + "backupFileDesiredRepDeg.ser");
+		        objectInputStream = new ObjectInputStream(fileInputStream);
+		        backupFileDesiredRepDeg = (ConcurrentHashMap<String, Integer>)objectInputStream.readObject();
+		    } else
+		    	backupFileDesiredRepDeg = new ConcurrentHashMap<String, Integer>();
+
+
+		    file = new File(str + "backupFileChunks.ser");
+		    if(file.exists()){
+		        
+		        fileInputStream = new FileInputStream(str + "backupFileChunks.ser");
+		        objectInputStream = new ObjectInputStream(fileInputStream);
+		        backupFileChunks = (ConcurrentHashMap<String, ArrayList<Integer>>)objectInputStream.readObject();
+		    } else
+		    	backupFileChunks = new ConcurrentHashMap<String, ArrayList<Integer>>();
+		    
+
+		    file = new File(str + "backupFileCurrentRepDeg.ser");
+		    if(file.exists()){
+		        fileInputStream = new FileInputStream(str + "backupFileCurrentRepDeg.ser");
+		        objectInputStream = new ObjectInputStream(fileInputStream);
+		        backupFileCurrentRepDeg = (ConcurrentHashMap<Map<String, Integer>, Integer>)objectInputStream.readObject();
+		    } else
+		    	backupFileCurrentRepDeg = new ConcurrentHashMap<Map<String, Integer>, Integer>();
+
+	        // objectInputStream.close();
+	        // fileInputStream.close();
+
+        } catch(Exception exception){
+
+	    	exception.printStackTrace();
+	    }
+	}
+
+	private static void saveInDisk(String toBeSaved){
+
+		FileOutputStream fileOutputStream = null;
+
+		try{
+
+			ObjectOutputStream objectOutputStream = null;
+			String str = "db" + File.separator + serverID + File.separator;
+
+			switch(toBeSaved){
+
+				case "pathFileID": 
+					fileOutputStream = new FileOutputStream(str + "pathFileID.ser");
+					objectOutputStream = new ObjectOutputStream(fileOutputStream);
+            		objectOutputStream.writeObject(pathFileID);
+            		break;
+
+            	case "backupFileDesiredRepDeg": 
+					fileOutputStream = new FileOutputStream(str + "backupFileDesiredRepDeg.ser");
+					objectOutputStream = new ObjectOutputStream(fileOutputStream);
+            		objectOutputStream.writeObject(backupFileDesiredRepDeg);
+            		break;
+
+            	case "backupFileChunks": 
+					fileOutputStream = new FileOutputStream(str + "backupFileChunks.ser");
+					objectOutputStream = new ObjectOutputStream(fileOutputStream);
+            		objectOutputStream.writeObject(backupFileChunks);
+            		break;
+
+            	case "backupFileCurrentRepDeg": 
+					fileOutputStream = new FileOutputStream(str + "backupFileCurrentRepDeg.ser");
+					objectOutputStream = new ObjectOutputStream(fileOutputStream);
+            		objectOutputStream.writeObject(backupFileCurrentRepDeg);
+            		break;
+
+            	default: 
+					break;
+			}
+
+			objectOutputStream.close();
+			fileOutputStream.close();
+		} catch (Exception exception) {
+            exception.printStackTrace();
+        } 
 	}
 
 	public static String getServerID(){
@@ -192,38 +321,31 @@ public class Peer implements RMISystem{
 	public static void setPathFileID(String path, String fileID){
 
 		pathFileID.put(path, fileID);
-		System.out.println(pathFileID);
-	}
-
-	public static void createFileToBackupFileChunks(String path){
-
-		backupFileChunks.put(path, new ArrayList<Integer>());
-	}
-	public static void addIndexToBackupFileChunks(String path, int index){
-
-		ArrayList chunksIndex = backupFileChunks.get(path);
-		chunksIndex.add(index);
-		backupFileChunks.replace(path, chunksIndex);
+		saveInDisk("pathFileID");
 	}
 
 	public static void createBackupFileDesiredRepDeg(String path, int repDeg){
 
 		backupFileDesiredRepDeg.put(path, repDeg);
+		saveInDisk("backupFileDesiredRepDeg");
 	}
 
+	public static void addIndexToBackupFileChunks(String path, int index){
 
-	public static void createBackupFileCurrentRepDeg(String path, int index, int repDeg){
+		if(backupFileChunks.get(path) == null){
+			backupFileChunks.put(path, new ArrayList<Integer>());
+		}
+		ArrayList chunksIndex = backupFileChunks.get(path);
+		chunksIndex.add(index);
+		backupFileChunks.replace(path, chunksIndex);
+		saveInDisk("backupFileChunks");
+	}
+
+	public static void addBackupFileCurrentRepDeg(String path, int index, int repDeg){
 
 		Map<String, Integer> map = new HashMap<String, Integer>();
 		map.put(path, index);
 		backupFileCurrentRepDeg.put(map, repDeg);
+		saveInDisk("backupFileCurrentRepDeg");
 	}
-	public static void setBackupFileCurrentRepDeg(String path, int index, int repDeg){
-
-		Map<String, Integer> map = new HashMap<String, Integer>();
-		map.put(path, index);
-		backupFileCurrentRepDeg.replace(map, repDeg);
-	}
-
-
 }
