@@ -130,9 +130,8 @@ public class MessageManager{
 				FileInputStream fileInputStream = new FileInputStream(auxFile);
 				BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
 
-				// trocar pelo que está comentado por baixo
-				byte[] buf = new byte[64000];
-				// byte[] buf = new byte[auxFile.length()];
+				// byte[] buf = new byte[64000];
+				byte[] buf = new byte[(int)auxFile.length()];
 				bufferedInputStream.read(buf);
 
 				sendCHUNK(buf);

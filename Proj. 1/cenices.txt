@@ -1,8 +1,0 @@
-checkar cenas como se quando chega ao fim para construir o ficheiro restored se tem os chunks todos necessarios e se nao tiver mandar msgs de erro
-
-alterar o file manager para passar a receber o path e nao fazer logo as funcoes
-
-no restore as imagens nem sempre vêm bem
-messageManager
-
-delete e reclaim também têm de alterar os concurrentHashMap

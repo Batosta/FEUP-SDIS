@@ -48,15 +48,13 @@ public class Restore implements Runnable{
 				DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
 
 				datagramSocket.send(datagramPacket);
-			}
 
-			System.out.println("SleepStart");
-			try{
-				Thread.sleep(15000);
-			} catch(InterruptedException exception){
-				exception.printStackTrace();
+				try{
+					Thread.sleep(500);
+				} catch(InterruptedException exception){
+					exception.printStackTrace();
+				}
 			}
-			System.out.println("SleepEnd");
 
 			buildRestoredFile();
 
