@@ -44,7 +44,6 @@ public class Delete implements Runnable{
 		}
 	}
 
-
 	private byte[] createDELETEMessage(String fileID){
 
 		String str = "DELETE ";
@@ -67,7 +66,8 @@ public class Delete implements Runnable{
 		String[] entries = toBeDeleteDirectory.list();
 		if(entries != null){
 			for(String s: entries){
-			    File currentFile = new File(toBeDeleteDirectory.getPath(),s);
+			    File currentFile = new File(toBeDeleteDirectory.getPath(), s);
+			    this.peer.reduceBackupFileCurrentRepDeg(fileID, Integer.parseInt(s.substring(3)));
 			    currentFile.delete();
 			}
 		}

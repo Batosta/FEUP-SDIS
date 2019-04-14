@@ -41,8 +41,14 @@ public class FileManager{
 
 		this.path = path;
 		this.file = new File(path);
-		createFileID();
-		createFileChunks();
+		if(!this.file.exists()){
+
+			System.out.println("Such file does not exist");
+		} else{
+
+			createFileID();
+			createFileChunks();
+		}
 	}
 
 	public void createFileChunks(){

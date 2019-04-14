@@ -55,9 +55,9 @@ public class Reclaim implements Runnable{
 
 								byte[] buf = createREMOVEDMessage(fileEntry, chunkEntry.substring(3));
 
-								// DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
+								DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, address, port);
 
-								// datagramSocket.send(datagramPacket);
+								datagramSocket.send(datagramPacket);
 								
 							} else{
 
@@ -74,7 +74,6 @@ public class Reclaim implements Runnable{
 
 
 	// REMOVED <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
-	// REMOVED 1.0 1 73dbb...(1.jpg) index
 	private byte[] createREMOVEDMessage(String fileID, String order){
 		
 		String str = "REMOVED ";
@@ -86,7 +85,6 @@ public class Reclaim implements Runnable{
 		str += " ";
 		str += order;
 		str += " ";
-		System.out.println(str);
 		str += "\r\n\r\n";
 
 		byte[] strBytes = str.getBytes();
@@ -94,7 +92,8 @@ public class Reclaim implements Runnable{
 	}
 
 	public void manageREMOVED(String fileID, int chunkID){
-		System.out.println("REMOVED");
+		
+		this.peer.reduceBackupFileCurrentRepDeg(fileID, chunkID);
 	}
 
 	public static Reclaim getInstance(){

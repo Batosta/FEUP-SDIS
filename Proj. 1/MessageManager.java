@@ -103,8 +103,6 @@ public class MessageManager{
 
 		waitRandomTime();
 
-		Peer.getInstance().addIndexToBackupFileChunks(headerData[3], Integer.parseInt(headerData[4]));
-
 		MulticastControl mc = Peer.getInstance().getMulticastControl();
 		mc.sendDatagramPacket(storedBytes);
 	}
