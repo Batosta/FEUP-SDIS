@@ -1,14 +1,9 @@
 import java.io.*;
-import java.io.Serializable;
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.net.*;
 import java.net.InetAddress;
-import java.util.concurrent.*;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.ArrayList;
 
 @SuppressWarnings("unchecked")
 public class Peer implements RMISystem{
@@ -28,6 +23,7 @@ public class Peer implements RMISystem{
 	private static Delete deleteProtocol;
 	private static Restore restoreProtocol;
 	private static Reclaim reclaimProtocol;
+	
 
 	private static ConcurrentHashMap<String, String> pathFileID; // path, fileID
 	private static ConcurrentHashMap<String, Integer> backupFileDesiredRepDeg; // <path, desiredRepDeg>
@@ -100,11 +96,15 @@ public class Peer implements RMISystem{
 
         // deserializeStorage(); //loads storage
 
+        // executor.execute(MC);
+        // executor.execute(MDB);
+        // executor.execute(MDR);
+
         new Thread(MC).start();
         new Thread(MDB).start();
 		new Thread(MDR).start();
 
-        // c.addShutdownHook(new Thread(Peer::serializeStorage)); //if CTRL-C is pressed when a Peer is running, it saves his storage so it can be loaded next time it runs
+        // Runtime.getRuntime().addShutdownHook(new Thread(Peer::serializeStorage)); //if CTRL-C is pressed when a Peer is running, it saves his storage so it can be loaded next time it runs
 	}
 
 
