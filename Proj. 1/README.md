@@ -35,14 +35,13 @@ The testing application for the program should be invoked as follows:
 
 where:
 
-<__peer_ap__>
-	Is the peer's access point.
-<__operation__>
-	Is the operation the peer of the backup service must execute. Can be either: BACKUP, RESTORE, DELETE or RECLAIM.
-<__opnd_1__>
-	Is either the path name of the file to backup/restore/delete, for the respective 3 subprotocols, or, in the case of RECLAIM the maximum amount of disk space (in KByte) that the service can use to store the chunks. The STATE operation takes no operands.
-<__opnd_2__>
-	This operand is an integer that specifies the desired replication degree.
+__peer_ap__ : Is the peer's access point.
+	
+__operation__ : Is the operation the peer of the backup service must execute. Can be either: BACKUP, RESTORE, DELETE or RECLAIM.
+
+__opnd_1__ : Is either the path name of the file to backup/restore/delete, for the respective 3 subprotocols, or, in the case of RECLAIM the maximum amount of disk space (in KByte) that the service can use to store the chunks. The STATE operation takes no operands.
+
+__opnd_2__ : This operand is an integer that specifies the desired replication degree.
 
 Examples:
 
