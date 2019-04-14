@@ -1,9 +1,14 @@
 import java.io.*;
+import java.io.Serializable;
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.net.*;
 import java.net.InetAddress;
+import java.util.concurrent.*;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 @SuppressWarnings("unchecked")
 public class Peer implements RMISystem{
@@ -53,10 +58,7 @@ public class Peer implements RMISystem{
 			createNeededDirectories();
 
 			loadFromDisk();
-			System.out.println(pathFileID);
-			System.out.println(backupFileDesiredRepDeg);
-			System.out.println(backupFileChunks);
-			System.out.println(backupFileCurrentRepDeg);
+
 		} catch (Exception exc) {
 
  			System.err.println(exc);
@@ -96,10 +98,6 @@ public class Peer implements RMISystem{
 
         // deserializeStorage(); //loads storage
 
-        // executor.execute(MC);
-        // executor.execute(MDB);
-        // executor.execute(MDR);
-
         new Thread(MC).start();
         new Thread(MDB).start();
 		new Thread(MDR).start();
@@ -132,37 +130,66 @@ public class Peer implements RMISystem{
 		new Thread(reclaimProtocol).start();
 	}
 
-	/*
-	For each file whose backup it has initiated:
-		The file pathname
-		The backup service id of the file
-		The desired replication degree
-		For each chunk of the file:
-		Its id
-		Its perceived replication degree
-	For each chunk it stores:
-		Its id
-		Its size (in KBytes)
-		Its perceived replication degree
-	The peer's storage capacity, i.e. the maximum amount of disk space that can be used to store 
-	chunks, and the amount of storage (both in KBytes) used to backup the chunks.
-	*/
-
 	public void peerState(){
 		
-		for (Object o : pathFileID.entrySet()) {
+		System.out.println("For each file whose backup it has initiated:");
+		for(Map.Entry<String, String> entry : pathFileID.entrySet()) {
 
-			System.out.println(o);
+		    String statePath = entry.getKey();
+		    String stateFileID = entry.getValue();
+
+		    System.out.println("\tFILE:");
+		    System.out.println("\t\tFile Path: " + statePath);
+		    System.out.println("\t\tFile ID: " + stateFileID);
+		    System.out.println("\t\tDesired Replication Degree: " + backupFileDesiredRepDeg.get(statePath));
+		    System.out.println("\t\tFILE CHUNKS:");
+
+		    for(int i = 0; i < backupFileCurrentRepDeg.size(); i++){
+
+		    	Map<String, Integer> map = new HashMap<String, Integer>();
+		    	map.put(statePath, i);
+		    	if(backupFileCurrentRepDeg.get(map) != null){
+
+		    		System.out.println("\t\t\tChunk " + i + " has " + backupFileCurrentRepDeg.get(map) + " replication degree.");
+		    	}
+		    }
 		}
+
+		System.out.println("For each chunk it stores:");
+		String str = serverID + File.separator + "backup";
+		File dirA = new File(str);
+		String[] entriesA = dirA.list();
+		int usedStorage = 0;
+		if(entriesA != null){
+
+			for(String id: entriesA){
+
+			    File dirB = new File(str + File.separator + id);
+			    String[] entriesB = dirB.list();
+			    if(entriesB != null){
+
+			    	for(String chunk: entriesB){
+
+			    		System.out.println("\tCHUNK:");
+			    		System.out.println("\t\tId: " + chunk.substring(3));
+			    		File currentChunk = new File(str + File.separator + id + File.separator + chunk);
+			    		System.out.println("\t\tSize: " + currentChunk.length());
+			    		usedStorage += currentChunk.length();
+			    	}
+			    }
+			}
+		}
+
+		System.out.println("Storage used: " + usedStorage);
 	}
 
 
 	private void createNeededDirectories(){
 
-		File databaseDirectory = new File("db" + File.separator + this.serverID);
+		File databaseDirectory = new File("db" + File.separator + serverID);
 		databaseDirectory.mkdirs();
 
-		String commonStr = this.serverID + File.separator;
+		String commonStr = serverID + File.separator;
 		
 		String backupStr = commonStr + "backup";
 		String restoredStr = commonStr + "restored";
