@@ -4,3 +4,5 @@ alterar o file manager para passar a receber o path e nao fazer logo as funcoes
 
 no restore as imagens nem sempre vêm bem
 messageManager
+
+delete e reclaim também têm de alterar os concurrentHashMap
