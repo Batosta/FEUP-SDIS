@@ -74,6 +74,7 @@ public class Reclaim implements Runnable{
 
 
 	// REMOVED <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
+	// REMOVED 1.0 1 73dbb...(1.jpg) index
 	private byte[] createREMOVEDMessage(String fileID, String order){
 		
 		String str = "REMOVED ";

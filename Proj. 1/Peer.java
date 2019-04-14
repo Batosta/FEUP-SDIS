@@ -1,11 +1,16 @@
 import java.io.*;
+import java.io.Serializable;
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.net.*;
 import java.net.InetAddress;
+import java.util.concurrent.*;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
 
-
+// @SuppressWarnings("unchecked")
 public class Peer implements RMISystem{
 
 	private static int MAX_THREADS = 100;
@@ -23,7 +28,12 @@ public class Peer implements RMISystem{
 	private static Delete deleteProtocol;
 	private static Restore restoreProtocol;
 	private static Reclaim reclaimProtocol;
-	
+
+	private static ConcurrentHashMap<String, String> pathFileID; // path, fileID
+	private static ConcurrentHashMap<String, ArrayList<Integer>> backupFileChunks; // <path, indexes of all filedID's chunks saved in this peer>
+	private static ConcurrentHashMap<String, Integer> backupFileDesiredRepDeg; // <path, desiredRepDeg>
+	private static ConcurrentHashMap<Map<String, Integer>, Integer> backupFileCurrentRepDeg; // <Map<path, index>, currentRepDeg
+
 
 	private Peer(String ipAddressMC, int portMC, String ipAddressMDB, int portMDB, String ipAddressMDR, int portMDR) {
 
@@ -45,6 +55,11 @@ public class Peer implements RMISystem{
 			reclaimProtocol = new Reclaim(0);
 
 			createNeededDirectories();
+
+			pathFileID = new ConcurrentHashMap<String, String>();
+			backupFileChunks = new ConcurrentHashMap<String, ArrayList<Integer>>();
+			backupFileDesiredRepDeg = new ConcurrentHashMap<String, Integer>();
+			backupFileCurrentRepDeg = new ConcurrentHashMap<Map<String, Integer>, Integer>();
 
 		} catch (Exception exc) {
 
@@ -85,15 +100,11 @@ public class Peer implements RMISystem{
 
         // deserializeStorage(); //loads storage
 
-        // executor.execute(MC);
-        // executor.execute(MDB);
-        // executor.execute(MDR);
-
         new Thread(MC).start();
         new Thread(MDB).start();
 		new Thread(MDR).start();
 
-        // Runtime.getRuntime().addShutdownHook(new Thread(Peer::serializeStorage)); //if CTRL-C is pressed when a Peer is running, it saves his storage so it can be loaded next time it runs
+        // c.addShutdownHook(new Thread(Peer::serializeStorage)); //if CTRL-C is pressed when a Peer is running, it saves his storage so it can be loaded next time it runs
 	}
 
 
@@ -160,4 +171,59 @@ public class Peer implements RMISystem{
 
 		return instance;
 	}
+	public static ConcurrentHashMap<String, String> getPathFileID(){
+
+		return pathFileID;
+	}
+	public static ConcurrentHashMap<String, ArrayList<Integer>> getBackupFileChunks(){
+
+		return backupFileChunks;
+	}
+	public static ConcurrentHashMap<String, Integer> getBackupFileDesiredRepDeg(){
+
+		return backupFileDesiredRepDeg;
+	}
+	public static ConcurrentHashMap<Map<String, Integer>, Integer> getBackupFileCurrentRepDeg(){
+
+		return backupFileCurrentRepDeg;
+	}
+
+
+	public static void setPathFileID(String path, String fileID){
+
+		pathFileID.put(path, fileID);
+		System.out.println(pathFileID);
+	}
+
+	public static void createFileToBackupFileChunks(String path){
+
+		backupFileChunks.put(path, new ArrayList<Integer>());
+	}
+	public static void addIndexToBackupFileChunks(String path, int index){
+
+		ArrayList chunksIndex = backupFileChunks.get(path);
+		chunksIndex.add(index);
+		backupFileChunks.replace(path, chunksIndex);
+	}
+
+	public static void createBackupFileDesiredRepDeg(String path, int repDeg){
+
+		backupFileDesiredRepDeg.put(path, repDeg);
+	}
+
+
+	public static void createBackupFileCurrentRepDeg(String path, int index, int repDeg){
+
+		Map<String, Integer> map = new HashMap<String, Integer>();
+		map.put(path, index);
+		backupFileCurrentRepDeg.put(map, repDeg);
+	}
+	public static void setBackupFileCurrentRepDeg(String path, int index, int repDeg){
+
+		Map<String, Integer> map = new HashMap<String, Integer>();
+		map.put(path, index);
+		backupFileCurrentRepDeg.replace(map, repDeg);
+	}
+
+
 }

@@ -32,7 +32,6 @@ public class Backup implements Runnable{
 
 		this.currentReplicationDegree = 0;
 		this.desiredReplicationDegree = 0;
-
 	}
 
 	public void run(){
